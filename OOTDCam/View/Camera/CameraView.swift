@@ -12,13 +12,16 @@ struct CameraView: View {
     
     var body: some View {
         ZStack {
-            // 背景: 仮のカメラプレビュー領域
-            Color.black
-                .overlay(
-                    LinearGradient(colors: [.blue.opacity(0.2), .purple.opacity(0.2)],
-                                   startPoint: .topLeading,
-                                   endPoint: .bottomTrailing)
-                        .blendMode(.screen)
+            // カメラプレビュー
+            CameraPreviewView(service: viewModel.service)
+                .background(
+                    Color.black
+                        .overlay(
+                            LinearGradient(colors: [.blue.opacity(0.2), .purple.opacity(0.2)],
+                                           startPoint: .topLeading,
+                                           endPoint: .bottomTrailing)
+                                .blendMode(.screen)
+                        )
                 )
                 .ignoresSafeArea()
             
@@ -44,9 +47,8 @@ struct CameraView: View {
                         )
                         .shadow(color: .cyan.opacity(0.5), radius: 12, x: 0, y: 0)
                         .scaleEffect(viewModel.isShutterAnimating ? 0.85 : 1.0)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: viewModel.isShutterAnimating)
                         .onTapGesture {
-                            viewModel.takePhoto()
+                            viewModel.send(.takePhoto)
                         }
                     
                     // キラキラ演出
@@ -59,6 +61,30 @@ struct CameraView: View {
                 .padding(.bottom, 40)
             }
         }
+        .alert("カメラ権限がありません", isPresented: $viewModel.cameraPermissionDenied) {
+            Button("設定を開く") {
+                if let url = URL(string: UIApplication.openSettingsURLString),
+                   UIApplication.shared.canOpenURL(url) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("カメラを使用するには設定で許可が必要です")
+        }
+        .alert("写真権限がありません", isPresented: $viewModel.photoLibraryPermissionDenied) {
+            Button("設定を開く") {
+                if let url = URL(string: UIApplication.openSettingsURLString),
+                   UIApplication.shared.canOpenURL(url) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("写真を保存するには設定で許可が必要です")
+        }
+        .onAppear { viewModel.send(.onAppear) }
+        .onDisappear { viewModel.send(.onDisappear) }
     }
 }
 

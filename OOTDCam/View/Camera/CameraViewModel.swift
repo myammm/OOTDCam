@@ -6,13 +6,125 @@
 //
 
 import SwiftUI
+import AVFoundation
+import Photos
 
 final class CameraViewModel: ObservableObject {
     @Published var isShutterAnimating: Bool = false
     @Published var showSparkles: Bool = false
+    @Published var lastCapturedImage: UIImage?
     
-    func takePhoto() {
-        // 撮影処理 (ここではダミー)
+    let service = CameraService()
+    
+    // 権限状態
+    private var cameraAuthorized = false
+    private var photoLibraryAuthorized = false
+    @Published var cameraPermissionDenied = false
+    @Published var photoLibraryPermissionDenied = false
+    
+    enum Input {
+        case onAppear
+        case onDisappear
+        case takePhoto
+    }
+    
+    func send(_ input: Input) {
+        switch input {
+        case .onAppear:
+            requestPermissionsAndStart()
+        case .onDisappear:
+            stop()
+        case .takePhoto:
+            takePhoto()
+        }
+    }
+    
+    // MARK: - 権限チェック & セッション開始
+    private func requestPermissionsAndStart() {
+        Task {
+            // カメラ権限
+            cameraAuthorized = await checkCameraPermission()
+            guard cameraAuthorized else {
+                print("カメラ権限なし")
+                // 権限拒否なら即フラグを立てる
+                DispatchQueue.main.async {
+                    self.cameraPermissionDenied = true
+                }
+                return
+            }
+            
+            // 写真ライブラリ権限
+            photoLibraryAuthorized = await checkPhotoLibraryPermission()
+            guard photoLibraryAuthorized else {
+                print("写真ライブラリ権限なし")
+                // 権限拒否なら即フラグを立てる
+                DispatchQueue.main.async {
+                    self.photoLibraryPermissionDenied = true
+                }
+                return
+            }
+            
+            // 両方OKならセッション開始
+            service.startSession()
+        }
+    }
+
+    private func checkCameraPermission() async -> Bool {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            return true
+        case .notDetermined:
+            return await withCheckedContinuation { continuation in
+                AVCaptureDevice.requestAccess(for: .video) { granted in
+                    continuation.resume(returning: granted)
+                }
+            }
+        case .denied, .restricted:
+            return false
+        @unknown default:
+            return false
+        }
+    }
+    
+    private func checkPhotoLibraryPermission() async -> Bool {
+        let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+        switch status {
+        case .authorized, .limited:
+            return true
+        case .notDetermined:
+            return await withCheckedContinuation { continuation in
+                PHPhotoLibrary.requestAuthorization(for: .addOnly) { newStatus in
+                    continuation.resume(returning: newStatus == .authorized || newStatus == .limited)
+                }
+            }
+        case .denied, .restricted:
+            return false
+        @unknown default:
+            return false
+        }
+    }
+    
+    private func stop() {
+        service.stopSession()
+    }
+    
+    private func takePhoto() {
+        guard cameraAuthorized, photoLibraryAuthorized else {
+            print("権限がないため撮影できません")
+            return
+        }
+        
+        // 撮影処理
+        service.capturePhoto { [weak self] image in
+            guard let self else { return }
+            if let image {
+                self.lastCapturedImage = image
+                self.saveToPhotoLibrary(image)
+            } else {
+                print("画像が取得できません")
+            }
+        }
+        
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
             isShutterAnimating = true
         }
@@ -31,6 +143,18 @@ final class CameraViewModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             withAnimation {
                 self.showSparkles = false
+            }
+        }
+    }
+
+    private func saveToPhotoLibrary(_ image: UIImage) {
+        Task { @MainActor in
+            do {
+                try await PHPhotoLibrary.shared().performChanges {
+                    PHAssetChangeRequest.creationRequestForAsset(from: image)
+                }
+            } catch {
+                print("写真保存に失敗: \(error.localizedDescription)")
             }
         }
     }
