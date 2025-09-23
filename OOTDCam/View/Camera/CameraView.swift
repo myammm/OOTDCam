@@ -60,6 +60,29 @@ struct CameraView: View {
                 }
                 .padding(.bottom, 40)
             }
+
+            VStack {
+                Spacer()
+                // サムネイル
+                HStack {
+                    if let image = viewModel.lastCapturedImage {
+                        Button(action: {
+                            openPhotoApp()
+                        }) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 60, height: 60)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .shadow(radius: 4)
+                                .padding(12)
+                        }
+                        .padding(.bottom, 12)
+                        .padding(.leading, 12)
+                    }
+                    Spacer()
+                }
+            }
         }
         .alert("カメラ権限がありません", isPresented: $viewModel.cameraPermissionDenied) {
             Button("設定を開く") {
@@ -85,6 +108,17 @@ struct CameraView: View {
         }
         .onAppear { viewModel.send(.onAppear) }
         .onDisappear { viewModel.send(.onDisappear) }
+    }
+    
+    private func openPhotoApp() {
+        // iOSの写真アプリを開くURLスキーム
+        if let url = URL(string: "photos-redirect://") {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            } else {
+                print("写真アプリを開けません")
+            }
+        }
     }
 }
 
