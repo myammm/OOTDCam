@@ -114,12 +114,11 @@ final class CameraViewModel: ObservableObject {
             return
         }
         
-        // 撮影処理
+        // 撮影処理 (保存はレビュー画面の DONE で行うため、ここでは保持のみ)
         service.capturePhoto { [weak self] image in
             guard let self else { return }
             if let image {
                 self.lastCapturedImage = image
-                self.saveToPhotoLibrary(image)
             } else {
                 print("画像が取得できません")
             }
@@ -147,15 +146,4 @@ final class CameraViewModel: ObservableObject {
         }
     }
 
-    private func saveToPhotoLibrary(_ image: UIImage) {
-        Task { @MainActor in
-            do {
-                try await PHPhotoLibrary.shared().performChanges {
-                    PHAssetChangeRequest.creationRequestForAsset(from: image)
-                }
-            } catch {
-                print("写真保存に失敗: \(error.localizedDescription)")
-            }
-        }
-    }
 }
