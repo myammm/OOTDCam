@@ -115,12 +115,16 @@ final class CameraViewModel: ObservableObject {
         }
         
         // 撮影処理 (保存はレビュー画面の DONE で行うため、ここでは保持のみ)
+        // capturePhoto のコールバックは AVFoundation のバックグラウンドキューで呼ばれるので、
+        // @Published の変更は必ずメインへディスパッチする
         service.capturePhoto { [weak self] image in
-            guard let self else { return }
-            if let image {
-                self.lastCapturedImage = image
-            } else {
-                print("画像が取得できません")
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let image {
+                    self.lastCapturedImage = image
+                } else {
+                    print("画像が取得できません")
+                }
             }
         }
         

@@ -129,6 +129,12 @@ final class ReviewViewModel: ObservableObject {
 
     private func ensureNormalizedImage() async -> UIImage {
         if let cached = cachedNormalizedImage { return cached }
+        // CameraService 側でバックグラウンド処理済みなら即返す
+        if originalImage.imageOrientation == .up {
+            cachedNormalizedImage = originalImage
+            return originalImage
+        }
+        // フォールバック (ライブラリ画像など orientation が .up でない場合)
         let image = originalImage
         let normalized = await Task.detached(priority: .userInitiated) {
             ImageCompositor.normalizedOrientation(image)
