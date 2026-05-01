@@ -72,19 +72,33 @@ final class CameraService: NSObject, ObservableObject {
 // MARK: - PhotoCaptureProcessor
 private class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate {
     private let completion: (UIImage?) -> Void
-    
+
     init(completion: @escaping (UIImage?) -> Void) {
         self.completion = completion
     }
-    
+
+    /// AVFoundation のデリゲートキュー (バックグラウンド) で呼ばれる。
+    /// 表示直前にメインスレッドで遅延デコードが走るのを避けるため、ここでデコード＆orientation正規化を完了させる。
     func photoOutput(_ output: AVCapturePhotoOutput,
                      didFinishProcessingPhoto photo: AVCapturePhoto,
                      error: Error?) {
-        if let data = photo.fileDataRepresentation(),
-           let image = UIImage(data: data) {
-            completion(image)
-        } else {
+        guard let data = photo.fileDataRepresentation(),
+              let raw = UIImage(data: data) else {
             completion(nil)
+            return
+        }
+        let prepared = Self.decodeAndNormalize(raw)
+        completion(prepared)
+    }
+
+    /// バックグラウンドでデコード＆orientation正規化を済ませる。出力は orientation = .up
+    private static func decodeAndNormalize(_ image: UIImage) -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = image.scale
+        format.opaque = true
+        let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
+        return renderer.image { _ in
+            image.draw(at: .zero)
         }
     }
 }
