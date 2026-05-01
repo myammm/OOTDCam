@@ -396,8 +396,9 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "コーデ写真を撮影するためにカメラを使用します";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "撮影したコーデ写真をカメラロールに保存するために使用します";
+				INFOPLIST_KEY_CFBundleDisplayName = fig.cam;
+				INFOPLIST_KEY_NSCameraUsageDescription = "写真を撮影するためにカメラを使用します";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "撮影した写真をカメラロールに保存するために使用します";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -413,7 +414,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = myammm.OOTDCam;
+				PRODUCT_BUNDLE_IDENTIFIER = app.myammm.figcam;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -438,8 +439,9 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "コーデ写真を撮影するためにカメラを使用します";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "撮影したコーデ写真をカメラロールに保存するために使用します";
+				INFOPLIST_KEY_CFBundleDisplayName = fig.cam;
+				INFOPLIST_KEY_NSCameraUsageDescription = "写真を撮影するためにカメラを使用します";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "撮影した写真をカメラロールに保存するために使用します";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -455,7 +457,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = myammm.OOTDCam;
+				PRODUCT_BUNDLE_IDENTIFIER = app.myammm.figcam;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -478,7 +480,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = myammm.OOTDCamTests;
+				PRODUCT_BUNDLE_IDENTIFIER = app.myammm.figcamTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
@@ -501,7 +503,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = myammm.OOTDCamTests;
+				PRODUCT_BUNDLE_IDENTIFIER = app.myammm.figcamTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
@@ -523,7 +525,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = myammm.OOTDCamUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = app.myammm.figcamUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
@@ -545,7 +547,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = myammm.OOTDCamUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = app.myammm.figcamUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";

@@ -98,10 +98,10 @@ struct CameraView: View {
     }
 }
 
-// MARK: - Status Bar (Y2Kcam タイトルのみ)
+// MARK: - Status Bar (fig.cam タイトルのみ)
 struct StatusBar: View {
     var body: some View {
-        Text("★ Y2Kcam ★")
+        Text("★ fig.cam ★")
             .font(.system(size: 10, weight: .semibold, design: .monospaced))
             .tracking(1.5)
             .foregroundStyle(Color.pink)
