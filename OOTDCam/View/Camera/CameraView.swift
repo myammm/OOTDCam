@@ -27,12 +27,6 @@ struct CameraView: View {
                     // 撮影ガイド (4隅のブラケット含む)
                     GuideOverlayView()
 
-                    // 全身モード バッジ (左上)
-                    FullBodyBadge()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .padding(.top, 14)
-                        .padding(.leading, 14)
-
                     // 日付スタンプ (右下)
                     DateStamp()
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
@@ -104,8 +98,8 @@ struct StatusBar: View {
         Text("★ fig.cam ★")
             .font(.system(size: 10, weight: .semibold, design: .monospaced))
             .tracking(1.5)
-            .foregroundStyle(Color.pink)
-            .shadow(color: .pink.opacity(0.4), radius: 3)
+            .foregroundStyle(guidePink)
+            .shadow(color: guidePink.opacity(0.4), radius: 3)
             .padding(.bottom, 8)
             .frame(height: 40)
             .frame(maxWidth: .infinity)
@@ -124,43 +118,6 @@ struct StatusBar: View {
                     .fill(Color(red: 0.541, green: 0.169, blue: 0.886).opacity(0.25))
                     .frame(height: 1)
             }
-    }
-}
-
-// MARK: - Full Body Mode Badge
-struct FullBodyBadge: View {
-    @State private var floatY: CGFloat = 0
-
-    var body: some View {
-        HStack(spacing: 4) {
-            Text("📐")
-                .font(.system(size: 11))
-            Text("全身モード")
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .tracking(0.5)
-                .foregroundStyle(Color(red: 0.541, green: 0.361, blue: 0.965))
-                .shadow(color: Color(red: 0.541, green: 0.361, blue: 0.965).opacity(0.4), radius: 3)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 4)
-        .background(
-            Capsule()
-                .fill(Color(red: 0.541, green: 0.361, blue: 0.965).opacity(0.2))
-                .overlay(
-                    Capsule()
-                        .stroke(Color(red: 0.541, green: 0.361, blue: 0.965).opacity(0.33), lineWidth: 1)
-                )
-        )
-        .background(
-            Capsule()
-                .fill(.ultraThinMaterial)
-        )
-        .offset(y: floatY)
-        .onAppear {
-            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
-                floatY = -4
-            }
-        }
     }
 }
 

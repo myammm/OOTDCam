@@ -7,11 +7,17 @@
 
 import SwiftUI
 
+/// ガイドの目印で使う紫 (#8A5CF6) — 旧バッジから流用
+let guidePurple = Color(red: 0.541, green: 0.361, blue: 0.965)
+
+/// ハート・ブラケット・タイトルで使うピンク (#FF2D88)
+let guidePink = Color(hex: "#FF2D88")
+
 struct GuideOverlayView: View {
     @State private var breath: CGFloat = 1.0
 
     private let neonGradient = LinearGradient(
-        colors: [.cyan, .purple, .pink],
+        colors: [.cyan, .purple, guidePink],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -37,7 +43,7 @@ struct GuideOverlayView: View {
                     path.addLine(to: CGPoint(x: centerX, y: feetLineY - 4))
                 }
                 .stroke(
-                    Color.pink.opacity(0.18),
+                    guidePurple.opacity(0.22),
                     style: StrokeStyle(lineWidth: 1, dash: [3, 6])
                 )
 
@@ -73,7 +79,7 @@ struct GuideOverlayView: View {
                 style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round, dash: [5, 4])
             )
             .frame(width: heartW, height: heartH)
-            .shadow(color: .pink.opacity(0.6), radius: 8)
+            .shadow(color: guidePurple.opacity(0.6), radius: 8)
             .position(x: centerX, y: centerY)
 
         // 内側クロスヘア (小さく cyan opacity 0.5)
@@ -94,7 +100,7 @@ struct GuideOverlayView: View {
             path.addLine(to: CGPoint(x: connectorEndX, y: centerY))
         }
         .stroke(
-            Color.pink.opacity(0.27),
+            guidePurple.opacity(0.35),
             style: StrokeStyle(lineWidth: 1, dash: [3, 3])
         )
 
@@ -114,24 +120,24 @@ struct GuideOverlayView: View {
             path.addLine(to: CGPoint(x: centerX + lineWidth / 2, y: y))
         }
         .stroke(
-            Color.pink.opacity(0.4),
+            guidePurple.opacity(0.5),
             style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])
         )
-        .shadow(color: .pink.opacity(0.27), radius: 4)
+        .shadow(color: guidePurple.opacity(0.35), radius: 4)
 
         // 下側ブラケット (左)
         Path { path in
             path.move(to: CGPoint(x: centerX - lineWidth / 2, y: y))
             path.addLine(to: CGPoint(x: centerX - lineWidth / 2, y: y + bracketHeight))
         }
-        .stroke(Color.pink.opacity(0.33), lineWidth: 1.5)
+        .stroke(guidePurple.opacity(0.45), lineWidth: 1.5)
 
         // 下側ブラケット (右)
         Path { path in
             path.move(to: CGPoint(x: centerX + lineWidth / 2, y: y))
             path.addLine(to: CGPoint(x: centerX + lineWidth / 2, y: y + bracketHeight))
         }
-        .stroke(Color.pink.opacity(0.33), lineWidth: 1.5)
+        .stroke(guidePurple.opacity(0.45), lineWidth: 1.5)
     }
 
     // MARK: - FEET ラベル (左下、短い接続線)
@@ -144,7 +150,7 @@ struct GuideOverlayView: View {
                 path.addLine(to: CGPoint(x: 16, y: 0))
             }
             .stroke(
-                Color.pink.opacity(0.27),
+                guidePurple.opacity(0.35),
                 style: StrokeStyle(lineWidth: 1, dash: [3, 3])
             )
             .frame(width: 16, height: 1)
@@ -159,16 +165,16 @@ struct GuideOverlayView: View {
         Text(text)
             .font(.system(size: 9, weight: .bold, design: .monospaced))
             .tracking(1.0)
-            .foregroundStyle(Color.pink)
-            .shadow(color: .pink.opacity(0.6), radius: 3)
+            .foregroundStyle(guidePurple)
+            .shadow(color: guidePurple.opacity(0.6), radius: 3)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(
                 Capsule()
-                    .fill(Color.pink.opacity(0.12))
+                    .fill(guidePurple.opacity(0.18))
                     .overlay(
                         Capsule()
-                            .stroke(Color.pink.opacity(0.4), lineWidth: 1)
+                            .stroke(guidePurple.opacity(0.45), lineWidth: 1)
                     )
             )
             .background(
@@ -185,7 +191,7 @@ struct ViewfinderCorners: View {
             let inset: CGFloat = 10
             let size: CGFloat = 26
             let lineWidth: CGFloat = 2
-            let color = Color.pink.opacity(0.55)
+            let color = guidePink.opacity(0.55)
             let w = geo.size.width
             let h = geo.size.height
 
