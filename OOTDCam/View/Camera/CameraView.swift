@@ -10,19 +10,31 @@ import SwiftUI
 struct CameraView: View {
     let onPhotoTaken: (UIImage) -> Void
     @StateObject private var viewModel = CameraViewModel()
+    /// 3:4 可視領域のグローバル座標 (= フルスクリーンプレビューレイヤーの座標と等価)
+    @State private var visibleCameraRect: CGRect = .zero
 
     var body: some View {
         ZStack {
             Color(red: 0.03, green: 0.03, blue: 0.06).ignoresSafeArea() // ベース #08080f
 
+            // フルスクリーンの単一プレビュー (.resizeAspectFill)
+            // 上下クロームの裏側にもカメラが見えるので、半透明クロームで透ける
+            CameraPreviewView(service: viewModel.service, gravity: .resizeAspectFill)
+                .ignoresSafeArea()
+
             VStack(spacing: 0) {
                 StatusBar()
 
-                // カメラ領域 (3:4 縦, 純正カメラと同じ比率)
+                // 3:4 可視領域 (透明 — フルスクリーンプレビューが透けて見える)
                 ZStack {
-                    Color.black
-
-                    CameraPreviewView(service: viewModel.service)
+                    // 領域のグローバル座標を取得して保存範囲計算用に保持
+                    GeometryReader { geo in
+                        Color.clear
+                            .onAppear { visibleCameraRect = geo.frame(in: .global) }
+                            .onChange(of: geo.frame(in: .global)) { _, newRect in
+                                visibleCameraRect = newRect
+                            }
+                    }
 
                     // 撮影ガイド (4隅のブラケット含む)
                     GuideOverlayView()
@@ -41,22 +53,22 @@ struct CameraView: View {
                     }
                 }
                 .aspectRatio(3.0 / 4.0, contentMode: .fit)
-                .clipped()
 
                 Spacer(minLength: 0)
 
-                // 案内テキストストリップ
                 CaptionStrip()
 
-                // シャッター領域
                 ShutterArea(
                     isAnimating: viewModel.isShutterAnimating,
-                    onTap: { viewModel.send(.takePhoto) }
+                    onTap: {
+                        viewModel.send(.takePhoto(visibleRect: visibleCameraRect))
+                    }
                 )
 
-                // 下部余白
-                Color(red: 0.03, green: 0.03, blue: 0.06)
+                // 下部余白 (リキッドグラス)
+                Color.clear
                     .frame(height: 26)
+                    .background(Color.black.opacity(0.55))
             }
         }
         .alert("カメラ権限がありません", isPresented: $viewModel.cameraPermissionDenied) {
@@ -103,16 +115,7 @@ struct StatusBar: View {
             .padding(.bottom, 8)
             .frame(height: 40)
             .frame(maxWidth: .infinity)
-            .background(
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.047, green: 0.047, blue: 0.094),
-                        Color(red: 0.055, green: 0.055, blue: 0.102)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
+            .background(Color.black.opacity(0.55))
             .overlay(alignment: .bottom) {
                 Rectangle()
                     .fill(Color(red: 0.541, green: 0.169, blue: 0.886).opacity(0.25))
@@ -145,10 +148,10 @@ struct CaptionStrip: View {
         Text("♡に顔、点線に足先を合わせて撮ってね")
             .font(.system(size: 10, weight: .regular, design: .monospaced))
             .tracking(0.5)
-            .foregroundStyle(Color.white.opacity(0.5))
+            .foregroundStyle(Color.white.opacity(0.7))
             .frame(maxWidth: .infinity)
             .frame(height: 44)
-            .background(Color(red: 0.055, green: 0.055, blue: 0.102))
+            .background(Color.black.opacity(0.55))
             .overlay(alignment: .top) {
                 Rectangle()
                     .fill(Color(red: 0.541, green: 0.169, blue: 0.886).opacity(0.25))
@@ -173,16 +176,7 @@ struct ShutterArea: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 130)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color(red: 0.055, green: 0.055, blue: 0.102),
-                    Color(red: 0.03, green: 0.03, blue: 0.06)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+        .background(Color.black.opacity(0.55))
     }
 }
 

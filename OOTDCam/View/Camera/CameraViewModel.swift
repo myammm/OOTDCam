@@ -25,17 +25,17 @@ final class CameraViewModel: ObservableObject {
     enum Input {
         case onAppear
         case onDisappear
-        case takePhoto
+        case takePhoto(visibleRect: CGRect)
     }
-    
+
     func send(_ input: Input) {
         switch input {
         case .onAppear:
             requestPermissionsAndStart()
         case .onDisappear:
             stop()
-        case .takePhoto:
-            takePhoto()
+        case .takePhoto(let visibleRect):
+            takePhoto(visibleRect: visibleRect)
         }
     }
     
@@ -108,16 +108,16 @@ final class CameraViewModel: ObservableObject {
         service.stopSession()
     }
     
-    private func takePhoto() {
+    private func takePhoto(visibleRect: CGRect) {
         guard cameraAuthorized, photoLibraryAuthorized else {
             print("権限がないため撮影できません")
             return
         }
-        
+
         // 撮影処理 (保存はレビュー画面の DONE で行うため、ここでは保持のみ)
         // capturePhoto のコールバックは AVFoundation のバックグラウンドキューで呼ばれるので、
         // @Published の変更は必ずメインへディスパッチする
-        service.capturePhoto { [weak self] image in
+        service.capturePhoto(visibleRectInLayer: visibleRect) { [weak self] image in
             DispatchQueue.main.async {
                 guard let self else { return }
                 if let image {
