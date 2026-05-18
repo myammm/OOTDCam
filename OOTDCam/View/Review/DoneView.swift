@@ -33,10 +33,6 @@ struct DoneView: View {
                     .foregroundStyle(Color.pink)
                     .shadow(color: .pink.opacity(0.4), radius: 8)
 
-                Text("盛れたね！📸💜")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.4))
-
                 Button(action: onShootAgain) {
                     Text("SHOOT AGAIN ★")
                         .font(.system(size: 12, weight: .bold, design: .monospaced))

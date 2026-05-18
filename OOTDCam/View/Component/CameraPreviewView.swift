@@ -10,20 +10,37 @@ import AVFoundation
 
 struct CameraPreviewView: UIViewRepresentable {
     @ObservedObject var service: CameraService
-    
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView(frame: .zero)
+    var gravity: AVLayerVideoGravity = .resizeAspect
+    /// 撮影時のクロップ計算用にレイヤーを CameraService に登録するか
+    var registerForCapture: Bool = true
+
+    func makeUIView(context: Context) -> PreviewContainerView {
+        let view = PreviewContainerView(frame: .zero)
         let previewLayer = AVCaptureVideoPreviewLayer(session: service.session)
-        previewLayer.videoGravity = .resizeAspect
+        previewLayer.videoGravity = gravity
         previewLayer.frame = view.bounds
-        previewLayer.cornerRadius = 0
-        previewLayer.masksToBounds = true
         view.layer.addSublayer(previewLayer)
-        DispatchQueue.main.async {
-            previewLayer.frame = view.bounds
+        view.previewLayer = previewLayer
+        if registerForCapture {
+            service.activePreviewLayer = previewLayer
         }
         return view
     }
-    
-    func updateUIView(_ uiView: UIView, context: Context) {}
+
+    func updateUIView(_ uiView: PreviewContainerView, context: Context) {
+        uiView.previewLayer?.videoGravity = gravity
+        if registerForCapture, let layer = uiView.previewLayer {
+            service.activePreviewLayer = layer
+        }
+    }
+}
+
+/// previewLayer の frame をレイアウト変更時に追従させる
+final class PreviewContainerView: UIView {
+    weak var previewLayer: AVCaptureVideoPreviewLayer?
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        previewLayer?.frame = bounds
+    }
 }

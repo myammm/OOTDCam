@@ -7,11 +7,17 @@
 
 import SwiftUI
 
+/// ガイドの目印で使う紫 (#8A5CF6) — 旧バッジから流用
+let guidePurple = Color(red: 0.541, green: 0.361, blue: 0.965)
+
+/// ハート・ブラケット・タイトルで使うピンク (#FF2D88)
+let guidePink = Color(hex: "#FF2D88")
+
 struct GuideOverlayView: View {
     @State private var breath: CGFloat = 1.0
 
     private let neonGradient = LinearGradient(
-        colors: [.cyan, .purple, .pink],
+        colors: [.cyan, .purple, guidePink],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -28,18 +34,9 @@ struct GuideOverlayView: View {
             let bracketHeight: CGFloat = 8
 
             ZStack {
-                // 4隅のビューファインダーブラケット
+                // 4隅のビューファインダーブラケット (位置合わせに影響しないのでブレスアニメ対象)
                 ViewfinderCorners()
-
-                // ハート↔足元の極薄縦破線
-                Path { path in
-                    path.move(to: CGPoint(x: centerX, y: faceY + 38))
-                    path.addLine(to: CGPoint(x: centerX, y: feetLineY - 4))
-                }
-                .stroke(
-                    Color.pink.opacity(0.18),
-                    style: StrokeStyle(lineWidth: 1, dash: [3, 6])
-                )
+                    .scaleEffect(breath, anchor: .center)
 
                 // 顔ガイド (グラデのハート + 内側クロスヘア)
                 faceGuide(centerX: centerX, centerY: faceY, screenWidth: width)
@@ -47,10 +44,9 @@ struct GuideOverlayView: View {
                 // 足先ガイド (中央の横破線 + 下側ブラケット)
                 feetCenterGuide(y: feetLineY, lineWidth: feetLineWidth, bracketHeight: bracketHeight, screenWidth: width)
 
-                // FEET ラベル (左下、短い接続線つき)
-                feetLabelLeft(bottom: feetLineBottomInset)
+                // FEET ラベル (左端、足元横破線まで点線で接続)
+                feetLabelLeft(y: feetLineY, screenWidth: width, feetLineWidth: feetLineWidth)
             }
-            .scaleEffect(breath, anchor: .center)
             .onAppear {
                 withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
                     breath = 1.04
@@ -73,7 +69,7 @@ struct GuideOverlayView: View {
                 style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round, dash: [5, 4])
             )
             .frame(width: heartW, height: heartH)
-            .shadow(color: .pink.opacity(0.6), radius: 8)
+            .shadow(color: guidePurple.opacity(0.6), radius: 8)
             .position(x: centerX, y: centerY)
 
         // 内側クロスヘア (小さく cyan opacity 0.5)
@@ -82,19 +78,20 @@ struct GuideOverlayView: View {
             .frame(width: 8, height: 8)
             .position(x: centerX, y: centerY - 2)
 
-        // FACE 接続線 (ハート右端 → ピル左端)
+        // FACE 接続線 (ハート右端から少し離して → ピル左端まで)
         let pillRightInset: CGFloat = 14
         let pillEstimatedWidth: CGFloat = 60
         let pillCenterX = screenWidth - pillRightInset - pillEstimatedWidth / 2
-        let connectorEndX = pillCenterX - pillEstimatedWidth / 2 - 2
-        let connectorStartX = centerX + heartW / 2
+        let gap: CGFloat = 6
+        let connectorStartX = centerX + heartW / 2 + gap
+        let connectorEndX = pillCenterX - pillEstimatedWidth / 2 - gap
 
         Path { path in
             path.move(to: CGPoint(x: connectorStartX, y: centerY))
             path.addLine(to: CGPoint(x: connectorEndX, y: centerY))
         }
         .stroke(
-            Color.pink.opacity(0.27),
+            guidePurple.opacity(0.35),
             style: StrokeStyle(lineWidth: 1, dash: [3, 3])
         )
 
@@ -114,44 +111,47 @@ struct GuideOverlayView: View {
             path.addLine(to: CGPoint(x: centerX + lineWidth / 2, y: y))
         }
         .stroke(
-            Color.pink.opacity(0.4),
+            guidePurple.opacity(0.5),
             style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])
         )
-        .shadow(color: .pink.opacity(0.27), radius: 4)
+        .shadow(color: guidePurple.opacity(0.35), radius: 4)
 
         // 下側ブラケット (左)
         Path { path in
             path.move(to: CGPoint(x: centerX - lineWidth / 2, y: y))
             path.addLine(to: CGPoint(x: centerX - lineWidth / 2, y: y + bracketHeight))
         }
-        .stroke(Color.pink.opacity(0.33), lineWidth: 1.5)
+        .stroke(guidePurple.opacity(0.45), lineWidth: 1.5)
 
         // 下側ブラケット (右)
         Path { path in
             path.move(to: CGPoint(x: centerX + lineWidth / 2, y: y))
             path.addLine(to: CGPoint(x: centerX + lineWidth / 2, y: y + bracketHeight))
         }
-        .stroke(Color.pink.opacity(0.33), lineWidth: 1.5)
+        .stroke(guidePurple.opacity(0.45), lineWidth: 1.5)
     }
 
-    // MARK: - FEET ラベル (左下、短い接続線)
+    // MARK: - FEET ラベル (左端、足元横破線まで接続。両端少し離す)
     @ViewBuilder
-    private func feetLabelLeft(bottom: CGFloat) -> some View {
-        HStack(spacing: 6) {
-            labelPill(text: "FEET")
-            Path { path in
-                path.move(to: .zero)
-                path.addLine(to: CGPoint(x: 16, y: 0))
-            }
-            .stroke(
-                Color.pink.opacity(0.27),
-                style: StrokeStyle(lineWidth: 1, dash: [3, 3])
-            )
-            .frame(width: 16, height: 1)
+    private func feetLabelLeft(y: CGFloat, screenWidth: CGFloat, feetLineWidth: CGFloat) -> some View {
+        let pillLeftInset: CGFloat = 14
+        let pillEstimatedWidth: CGFloat = 46
+        let pillCenterX = pillLeftInset + pillEstimatedWidth / 2
+        let gap: CGFloat = 6
+        let connectorStartX = pillCenterX + pillEstimatedWidth / 2 + gap
+        let connectorEndX = screenWidth / 2 - feetLineWidth / 2 - gap
+
+        Path { path in
+            path.move(to: CGPoint(x: connectorStartX, y: y))
+            path.addLine(to: CGPoint(x: connectorEndX, y: y))
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-        .padding(.leading, 14)
-        .padding(.bottom, bottom - 4)
+        .stroke(
+            guidePurple.opacity(0.35),
+            style: StrokeStyle(lineWidth: 1, dash: [3, 3])
+        )
+
+        labelPill(text: "FEET")
+            .position(x: pillCenterX, y: y)
     }
 
     // MARK: - ラベルピル (共通)
@@ -159,16 +159,16 @@ struct GuideOverlayView: View {
         Text(text)
             .font(.system(size: 9, weight: .bold, design: .monospaced))
             .tracking(1.0)
-            .foregroundStyle(Color.pink)
-            .shadow(color: .pink.opacity(0.6), radius: 3)
+            .foregroundStyle(guidePurple)
+            .shadow(color: guidePurple.opacity(0.6), radius: 3)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(
                 Capsule()
-                    .fill(Color.pink.opacity(0.12))
+                    .fill(guidePurple.opacity(0.18))
                     .overlay(
                         Capsule()
-                            .stroke(Color.pink.opacity(0.4), lineWidth: 1)
+                            .stroke(guidePurple.opacity(0.45), lineWidth: 1)
                     )
             )
             .background(
@@ -185,7 +185,7 @@ struct ViewfinderCorners: View {
             let inset: CGFloat = 10
             let size: CGFloat = 26
             let lineWidth: CGFloat = 2
-            let color = Color.pink.opacity(0.55)
+            let color = guidePink.opacity(0.55)
             let w = geo.size.width
             let h = geo.size.height
 
