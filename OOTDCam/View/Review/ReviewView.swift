@@ -119,7 +119,14 @@ struct ReviewView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 .padding(12)
 
-                DateStamp()
+                // 日付スタンプ: タップで保存時の焼き込み ON/OFF。OFF時は半透明で表示
+                DateStamp(date: viewModel.capturedDate)
+                    .opacity(viewModel.includeDateStamp ? 1.0 : 0.3)
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.includeDateStamp.toggle()
+                        }
+                    }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                     .padding(14)
             }
