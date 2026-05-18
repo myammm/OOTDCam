@@ -18,7 +18,8 @@ final class ReviewViewModel: ObservableObject {
     /// オーバーレイ中心座標 (写真エリア座標系)
     @Published var overlayCenter: CGPoint = .zero
     @Published var overlayScale: CGFloat = 0.5
-    @Published var hasOverlay: Bool = true
+    /// 起動時はカバーなし。ユーザーがシェイプを選んで初めて表示される
+    @Published var hasOverlay: Bool = false
 
     @Published var isSaving: Bool = false
     @Published var saveErrorMessage: String?
@@ -72,19 +73,20 @@ final class ReviewViewModel: ObservableObject {
     func selectShape(_ shape: CoverShapeID, areaSize: CGSize) {
         selectedShape = shape
         if !hasOverlay {
+            // OFF → ON のときは位置とサイズを維持して復帰させる
+            // 位置は initializePositionIfNeeded で初回設定済み
             hasOverlay = true
-            let rect = displayedPhotoRect(in: areaSize)
-            overlayCenter = CGPoint(x: rect.midX, y: rect.midY)
         }
+    }
+
+    /// OFF ボタン用: オーバーレイを非表示にする
+    func disableOverlay() {
+        hasOverlay = false
     }
 
     func selectGradient(id: String, areaSize: CGSize) {
         selectedGradientID = id
-        if !hasOverlay {
-            hasOverlay = true
-            let rect = displayedPhotoRect(in: areaSize)
-            overlayCenter = CGPoint(x: rect.midX, y: rect.midY)
-        }
+        // gradient のタップでは overlay を勝手に出さない (OFF 状態を尊重)
     }
 
     func translate(to point: CGPoint) {

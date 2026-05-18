@@ -13,6 +13,9 @@ struct ReviewView: View {
     @StateObject private var viewModel: ReviewViewModel
     @State private var dragStartCenter: CGPoint?
 
+    /// hasOverlay 切替時のアニメーション
+    private static let overlayToggleAnimation: Animation = .spring(response: 0.35, dampingFraction: 0.72)
+
     init(image: UIImage, onRetake: @escaping () -> Void, onDone: @escaping () -> Void) {
         self.image = image
         self.onRetake = onRetake
@@ -84,31 +87,44 @@ struct ReviewView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
 
-                if viewModel.hasOverlay {
-                    overlayLayer(areaSize: geo.size)
-                }
+                // ハートなどのオーバーレイ。conditional 削除＋常に存在＋modifier で見せ消し
+                overlayLayer(areaSize: geo.size)
+                    .scaleEffect(
+                        viewModel.hasOverlay ? 1.0 : 0.3,
+                        anchor: UnitPoint(
+                            x: geo.size.width > 0 ? viewModel.overlayCenter.x / geo.size.width : 0.5,
+                            y: geo.size.height > 0 ? viewModel.overlayCenter.y / geo.size.height : 0.5
+                        )
+                    )
+                    .opacity(viewModel.hasOverlay ? 1.0 : 0.0)
+                    .allowsHitTesting(viewModel.hasOverlay)
 
-                if viewModel.hasOverlay {
-                    HStack(spacing: 5) {
-                        circleControl(label: "−", color: .cyan) {
-                            viewModel.adjustScale(by: -0.15)
-                        }
-                        circleControl(label: "+", color: .cyan) {
-                            viewModel.adjustScale(by: 0.15)
-                        }
-                        circleControl(label: "✕", color: Color(red: 1, green: 0, blue: 0.25)) {
+                // 右上のコントロール (+/−/✕)
+                HStack(spacing: 5) {
+                    circleControl(label: "−", color: .cyan) {
+                        viewModel.adjustScale(by: -0.15)
+                    }
+                    circleControl(label: "+", color: .cyan) {
+                        viewModel.adjustScale(by: 0.15)
+                    }
+                    circleControl(label: "✕", color: Color(red: 1, green: 0, blue: 0.25)) {
+                        withAnimation(Self.overlayToggleAnimation) {
                             viewModel.removeOverlay()
                         }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                    .padding(12)
                 }
+                .offset(y: viewModel.hasOverlay ? 0 : -60)
+                .opacity(viewModel.hasOverlay ? 1.0 : 0.0)
+                .allowsHitTesting(viewModel.hasOverlay)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .padding(12)
 
                 DateStamp()
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                     .padding(14)
             }
             .clipped()
+            .animation(.spring(response: 0.35, dampingFraction: 0.72), value: viewModel.hasOverlay)
             .onAppear {
                 lastPhotoAreaSize = geo.size
                 viewModel.initializePositionIfNeeded(areaSize: geo.size)
@@ -136,18 +152,19 @@ struct ReviewView: View {
                         .position(viewModel.overlayCenter)
                         .frame(width: areaSize.width, height: areaSize.height)
                 )
-                .frame(width: areaSize.width, height: areaSize.height)
                 .allowsHitTesting(false)
 
-            // グラデレイヤー
+            // グラデレイヤー (shadow は外側に halo を出して「2つ目のハート」に見えがちなので除去)
             shape
                 .fill(viewModel.selectedGradient.swiftUIGradient)
                 .frame(width: shapeSize.width, height: shapeSize.height)
                 .opacity(viewModel.sheer)
-                .shadow(color: viewModel.selectedGradient.colors.first?.opacity(0.2) ?? .clear, radius: 16)
                 .contentShape(Rectangle())
+                // coordinateSpace は必ず .global にする。デフォルトの .local だと
+                // .position() で動いたハート自身に座標系が追従して translation が振動し、
+                // ハートが左右にガクガク動く feedback loop が発生する
                 .gesture(
-                    DragGesture()
+                    DragGesture(minimumDistance: 0, coordinateSpace: .global)
                         .onChanged { value in
                             if dragStartCenter == nil {
                                 dragStartCenter = viewModel.overlayCenter
@@ -219,6 +236,7 @@ struct ReviewView: View {
         HStack(spacing: 6) {
             sectionLabel("SHAPE", color: .pink)
             HStack(spacing: 5) {
+                offButton
                 ForEach(CoverShapeID.allCases) { shapeID in
                     shapeButton(shapeID)
                 }
@@ -226,10 +244,43 @@ struct ReviewView: View {
         }
     }
 
-    private func shapeButton(_ shapeID: CoverShapeID) -> some View {
-        let isSelected = viewModel.selectedShape == shapeID
+    private var offButton: some View {
+        let isSelected = !viewModel.hasOverlay
         return Button {
-            viewModel.selectShape(shapeID, areaSize: lastPhotoAreaSize)
+            withAnimation(Self.overlayToggleAnimation) {
+                viewModel.disableOverlay()
+            }
+        } label: {
+            VStack(spacing: 1) {
+                Text("✕")
+                    .font(.system(size: 15, weight: .regular, design: .monospaced))
+                Text("OFF")
+                    .font(.system(size: 7, weight: .regular, design: .monospaced))
+                    .tracking(0.5)
+            }
+            .foregroundStyle(isSelected ? Color.pink : Color(white: 0.5))
+            .frame(maxWidth: .infinity)
+            .frame(height: 36)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(isSelected ? Color.pink.opacity(0.12) : Color.white.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(
+                                isSelected ? Color.pink.opacity(0.53) : Color.white.opacity(0.08),
+                                lineWidth: 1.5
+                            )
+                    )
+            )
+        }
+    }
+
+    private func shapeButton(_ shapeID: CoverShapeID) -> some View {
+        let isSelected = viewModel.hasOverlay && viewModel.selectedShape == shapeID
+        return Button {
+            withAnimation(Self.overlayToggleAnimation) {
+                viewModel.selectShape(shapeID, areaSize: lastPhotoAreaSize)
+            }
         } label: {
             VStack(spacing: 1) {
                 Text(shapeID.label)
@@ -252,7 +303,6 @@ struct ReviewView: View {
                             )
                     )
             )
-            .shadow(color: isSelected ? Color.pink.opacity(0.13) : .clear, radius: 6)
         }
     }
 
