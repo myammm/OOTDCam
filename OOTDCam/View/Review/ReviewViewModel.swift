@@ -18,10 +18,17 @@ final class ReviewViewModel: ObservableObject {
     /// オーバーレイ中心座標 (写真エリア座標系)
     @Published var overlayCenter: CGPoint = .zero
     @Published var overlayScale: CGFloat = 0.5
-    @Published var hasOverlay: Bool = true
+    /// 起動時はカバーなし。ユーザーがシェイプを選んで初めて表示される
+    @Published var hasOverlay: Bool = false
+
+    /// 保存画像に日付スタンプを焼き込むか
+    @Published var includeDateStamp: Bool = true
 
     @Published var isSaving: Bool = false
     @Published var saveErrorMessage: String?
+
+    /// 撮影時刻 (プレビューと保存で同じ日付を出すために固定)
+    let capturedDate: Date = Date()
 
     private var hasInitializedPosition = false
     private let compositor = ImageCompositor()
@@ -72,19 +79,20 @@ final class ReviewViewModel: ObservableObject {
     func selectShape(_ shape: CoverShapeID, areaSize: CGSize) {
         selectedShape = shape
         if !hasOverlay {
+            // OFF → ON のときは位置とサイズを維持して復帰させる
+            // 位置は initializePositionIfNeeded で初回設定済み
             hasOverlay = true
-            let rect = displayedPhotoRect(in: areaSize)
-            overlayCenter = CGPoint(x: rect.midX, y: rect.midY)
         }
+    }
+
+    /// OFF ボタン用: オーバーレイを非表示にする
+    func disableOverlay() {
+        hasOverlay = false
     }
 
     func selectGradient(id: String, areaSize: CGSize) {
         selectedGradientID = id
-        if !hasOverlay {
-            hasOverlay = true
-            let rect = displayedPhotoRect(in: areaSize)
-            overlayCenter = CGPoint(x: rect.midX, y: rect.midY)
-        }
+        // gradient のタップでは overlay を勝手に出さない (OFF 状態を尊重)
     }
 
     func translate(to point: CGPoint) {
@@ -112,11 +120,16 @@ final class ReviewViewModel: ObservableObject {
         // orientation 正規化はバックグラウンドで一度だけ
         let normalized = await ensureNormalizedImage()
 
-        let imageToSave: UIImage?
+        var imageToSave: UIImage?
         if hasOverlay {
             imageToSave = composeImage(normalized: normalized, areaSize: areaSize)
         } else {
             imageToSave = normalized
+        }
+
+        // 日付スタンプ焼き込み (ON のとき)
+        if includeDateStamp, let img = imageToSave {
+            imageToSave = ImageCompositor.drawDateStamp(on: img, date: capturedDate)
         }
 
         guard let image = imageToSave else {

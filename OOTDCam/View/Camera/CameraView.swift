@@ -126,6 +126,12 @@ struct StatusBar: View {
 
 // MARK: - Date Stamp (レトロデジカメ風)
 struct DateStamp: View {
+    let date: Date
+
+    init(date: Date = Date()) {
+        self.date = date
+    }
+
     private static let formatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "''yy.MM.dd"
@@ -133,7 +139,7 @@ struct DateStamp: View {
     }()
 
     var body: some View {
-        Text(Self.formatter.string(from: Date()))
+        Text(Self.formatter.string(from: date))
             .font(.system(size: 11, weight: .bold, design: .monospaced))
             .tracking(1.0)
             .foregroundStyle(Color(red: 1.0, green: 0.42, blue: 0.21))

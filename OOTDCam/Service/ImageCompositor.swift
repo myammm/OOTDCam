@@ -23,6 +23,54 @@ final class ImageCompositor {
         }
     }
 
+    /// 右下に '''YY.MM.DD 形式の日付スタンプを焼き込む (レトロデジカメ風)
+    static func drawDateStamp(on image: UIImage, date: Date) -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = image.scale
+        format.opaque = true
+        let size = image.size
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "''yy.MM.dd"
+        let dateString = formatter.string(from: date)
+
+        // 画像幅に比例したフォントサイズ・パディング (プレビュー 390pt 幅 × 11pt → 約 0.028)
+        let fontSize = size.width * 0.028
+        let padding = size.width * 0.036
+        let shadowOffset = CGSize(width: fontSize * 0.18, height: fontSize * 0.18)
+        let font = UIFont.monospacedSystemFont(ofSize: fontSize, weight: .bold)
+        let textColor = UIColor(red: 1.0, green: 0.42, blue: 0.21, alpha: 1.0)
+
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: textColor,
+            .kern: fontSize * 0.09
+        ]
+        let shadowAttrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: UIColor.black.withAlphaComponent(0.6),
+            .kern: fontSize * 0.09
+        ]
+        let textSize = (dateString as NSString).size(withAttributes: attrs)
+        let originX = size.width - textSize.width - padding
+        let originY = size.height - textSize.height - padding
+
+        return renderer.image { _ in
+            image.draw(at: .zero)
+            // 黒のドロップシャドウ (offset 付き)
+            (dateString as NSString).draw(
+                at: CGPoint(x: originX + shadowOffset.width, y: originY + shadowOffset.height),
+                withAttributes: shadowAttrs
+            )
+            // オレンジの本体
+            (dateString as NSString).draw(
+                at: CGPoint(x: originX, y: originY),
+                withAttributes: attrs
+            )
+        }
+    }
+
     /// - Parameters:
     ///   - original: 撮影直後の画像 (orientation は事前正規化済み想定)
     ///   - shape: カバーシェイプ
