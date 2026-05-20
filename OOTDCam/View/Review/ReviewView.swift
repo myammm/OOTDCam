@@ -395,7 +395,7 @@ private struct ReviewHeader: View {
 
             Spacer()
 
-            Text("✦ COVER ✦")
+            Text("★ fig.cam ★")
                 .font(.system(size: 10, weight: .semibold, design: .monospaced))
                 .tracking(1.5)
                 .foregroundStyle(Color.pink)
