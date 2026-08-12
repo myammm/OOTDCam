@@ -45,7 +45,6 @@ final class CameraViewModel: ObservableObject {
             // カメラ権限
             cameraAuthorized = await checkCameraPermission()
             guard cameraAuthorized else {
-                print("カメラ権限なし")
                 // 権限拒否なら即フラグを立てる
                 DispatchQueue.main.async {
                     self.cameraPermissionDenied = true
@@ -56,7 +55,6 @@ final class CameraViewModel: ObservableObject {
             // 写真ライブラリ権限
             photoLibraryAuthorized = await checkPhotoLibraryPermission()
             guard photoLibraryAuthorized else {
-                print("写真ライブラリ権限なし")
                 // 権限拒否なら即フラグを立てる
                 DispatchQueue.main.async {
                     self.photoLibraryPermissionDenied = true
@@ -109,10 +107,7 @@ final class CameraViewModel: ObservableObject {
     }
     
     private func takePhoto(visibleRect: CGRect) {
-        guard cameraAuthorized, photoLibraryAuthorized else {
-            print("権限がないため撮影できません")
-            return
-        }
+        guard cameraAuthorized, photoLibraryAuthorized else { return }
 
         // 撮影処理 (保存はレビュー画面の DONE で行うため、ここでは保持のみ)
         // capturePhoto のコールバックは AVFoundation のバックグラウンドキューで呼ばれるので、
@@ -122,8 +117,6 @@ final class CameraViewModel: ObservableObject {
                 guard let self else { return }
                 if let image {
                     self.lastCapturedImage = image
-                } else {
-                    print("画像が取得できません")
                 }
             }
         }
