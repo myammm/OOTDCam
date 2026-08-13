@@ -22,7 +22,7 @@ struct CameraView: View {
                 // 上部の帯は薄くし、余白を下側に寄せる
                 Wordmark()
                     .frame(maxWidth: .infinity)
-                    .frame(height: 48)
+                    .frame(height: Pearl.topBarHeight)
 
                 cameraPlate
 
@@ -94,9 +94,10 @@ struct CameraView: View {
 
             GuideOverlayView()
 
+            // 位置は編集画面・保存時の焼き込みと揃える (右12pt / 下10pt)
             DateStamp()
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .padding(.bottom, 12)
+                .padding(.bottom, 10)
                 .padding(.trailing, 12)
 
             if viewModel.showSparkles {
@@ -134,9 +135,9 @@ struct DateStamp: View {
         Text(Self.formatter.string(from: date))
             .font(.system(size: 11, weight: .bold, design: .monospaced))
             .tracking(1.0)
-            .foregroundStyle(Color(red: 1.0, green: 0.42, blue: 0.21))
-            .shadow(color: Color(red: 1.0, green: 0.42, blue: 0.21).opacity(0.67), radius: 4)
-            .shadow(color: .black.opacity(0.6), radius: 0, x: 2, y: 2)
+            .foregroundStyle(Color(.dateStampText))
+            .shadow(color: Color(.dateStampGlow).opacity(0.75), radius: 4.5)
+            .shadow(color: .black.opacity(0.7), radius: 1.5, y: 1)
     }
 }
 
