@@ -3,7 +3,7 @@
 //  OOTDCam
 //
 //  パール/ガラス方向の共通デザイン定義 (issue #14)
-//  色は Assets.xcassets/Pearl に定義したカラーセットを参照する
+//  色は Assets.xcassets/Colors に定義したカラーセットを参照する
 //
 
 import SwiftUI
