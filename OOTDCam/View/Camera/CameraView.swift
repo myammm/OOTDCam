@@ -29,16 +29,18 @@ struct CameraView: View {
                 Text("♡に顔、線に足先")
                     .font(.system(size: 13, weight: .medium, design: .rounded))
                     .foregroundStyle(Pearl.inkSoft)
-                    .padding(.top, 16)
+                    .padding(.top, 14)
 
-                Spacer(minLength: 12)
+                // シャッターは説明文と画面下端の間で上下センター
+                Spacer(minLength: 0)
 
                 ShutterButton(isAnimating: viewModel.isShutterAnimating) {
                     viewModel.send(.takePhoto(visibleRect: CGRect(origin: .zero, size: previewSize)))
                 }
 
-                Spacer(minLength: 24)
+                Spacer(minLength: 0)
             }
+            .padding(.bottom, 10)
         }
         .alert("カメラ権限がありません", isPresented: $viewModel.cameraPermissionDenied) {
             Button("設定を開く") {

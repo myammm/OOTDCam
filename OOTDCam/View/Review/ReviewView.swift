@@ -39,14 +39,15 @@ struct ReviewView: View {
                     .pearlPlate()
                     .padding(.horizontal, 10)
 
+                // 操作ブロックはプレートと画面下端の間で上下センター
+                Spacer(minLength: 18)
+
+                // 左右は実際に表示されている写真の幅に揃える。
+                // 3:4 プレートは高さ制約で縮むことがあり、固定 padding では写真の幅とずれる
                 controlPad
+                    .frame(width: lastPhotoAreaSize.width > 0 ? lastPhotoAreaSize.width : nil)
 
-                Spacer(minLength: 0)
-
-                Text("シェイプを選んで顔にかぶせてね・ドラッグで移動")
-                    .font(.system(size: 11, weight: .regular, design: .rounded))
-                    .foregroundStyle(Pearl.inkSoft.opacity(0.8))
-                    .padding(.bottom, 10)
+                Spacer(minLength: 16)
             }
         }
         .alert("保存に失敗", isPresented: .constant(viewModel.saveErrorMessage != nil)) {
@@ -193,18 +194,25 @@ struct ReviewView: View {
 
     // MARK: - Control Pad (左ラベル列なし・画面幅いっぱい)
 
+    /// 間隔は「見た目の距離」基準で組む。ドットは44pt枠に上下5pt、スライダーは
+    /// 44pt枠に上下約12ptの透明な当たり判定マージンがあるため、等間隔の spacing だと
+    /// 見た目の間隔が下に行くほど開いてバランスが崩れる
     private var controlPad: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 0) {
             shapeRow
+
+            // 見た目の間隔 18pt (= 13 + ドットの透明マージン5)
             colorDots
-            VStack(spacing: 9) {
+                .padding(.top, 13)
+
+            // 見た目の間隔 18pt (= 1 + ドット5 + スライダー12)
+            // スライダー同士は 16pt (= 12 + 12 - 8)
+            VStack(spacing: -8) {
                 pearlSlider("濃さ", value: $viewModel.sheer, in: 0.15...0.85, step: 0.05)
                 pearlSlider("ぼかし", value: $viewModel.blur, in: 0...30, step: 1)
             }
+            .padding(.top, 1)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 14)
-        .padding(.bottom, 6)
     }
 
     // MARK: - Shape Tiles (グミ質感)
