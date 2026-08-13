@@ -113,6 +113,7 @@ struct ReviewView: View {
                 .padding(12)
 
                 // 日付スタンプ: タップで保存時の焼き込み ON/OFF。OFF時は半透明で表示
+                // 位置は撮影画面・保存時の焼き込みと揃える (右12pt / 下10pt)
                 DateStamp(date: viewModel.capturedDate)
                     .opacity(viewModel.includeDateStamp ? 1.0 : 0.3)
                     .onTapGesture {
@@ -121,7 +122,8 @@ struct ReviewView: View {
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                    .padding(14)
+                    .padding(.bottom, 10)
+                    .padding(.trailing, 12)
             }
             .clipped()
             .animation(.spring(response: 0.35, dampingFraction: 0.72), value: viewModel.hasOverlay)
@@ -427,7 +429,7 @@ private struct ReviewHeader: View {
             }
         }
         .padding(.horizontal, 16)
-        .frame(height: 52)
+        .frame(height: Pearl.topBarHeight)
         .frame(maxWidth: .infinity)
     }
 }

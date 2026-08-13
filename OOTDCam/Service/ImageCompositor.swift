@@ -59,39 +59,40 @@ final class ImageCompositor {
         formatter.dateFormat = "''yy.MM.dd"
         let dateString = formatter.string(from: date)
 
-        // 画像幅に比例したフォントサイズ・パディング (プレビュー 390pt 幅 × 11pt → 約 0.028)
-        let fontSize = size.width * 0.028
-        let padding = size.width * 0.036
-        let shadowOffset = CGSize(width: fontSize * 0.18, height: fontSize * 0.18)
+        // 画像幅に比例したフォントサイズ・パディング。
+        // 画面上の表示 (写真幅 ≈ 360pt・フォント11pt・右12pt・下10pt) と比率を揃える
+        let fontSize = size.width * (11.0 / 360.0)
+        let paddingTrailing = size.width * (12.0 / 360.0)
+        let paddingBottom = size.width * (10.0 / 360.0)
         let font = UIFont.monospacedSystemFont(ofSize: fontSize, weight: .bold)
-        let textColor = UIColor(red: 1.0, green: 0.42, blue: 0.21, alpha: 1.0)
 
         let attrs: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: textColor,
+            .foregroundColor: UIColor(resource: .dateStampText),
             .kern: fontSize * 0.09
         ]
-        let shadowAttrs: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: UIColor.black.withAlphaComponent(0.6),
-            .kern: fontSize * 0.09
-        ]
+
+        // プレビュー (DateStamp) と同じ2層: オレンジのグロウ + 柔らかい黒影
+        let glow = NSShadow()
+        glow.shadowColor = UIColor(resource: .dateStampGlow).withAlphaComponent(0.75)
+        glow.shadowBlurRadius = fontSize * 0.8
+        glow.shadowOffset = .zero
+
+        let drop = NSShadow()
+        drop.shadowColor = UIColor.black.withAlphaComponent(0.7)
+        drop.shadowBlurRadius = fontSize * 0.27
+        drop.shadowOffset = CGSize(width: 0, height: fontSize * 0.09)
+
         let textSize = (dateString as NSString).size(withAttributes: attrs)
-        let originX = size.width - textSize.width - padding
-        let originY = size.height - textSize.height - padding
+        let origin = CGPoint(
+            x: size.width - textSize.width - paddingTrailing,
+            y: size.height - textSize.height - paddingBottom
+        )
 
         return renderer.image { _ in
             image.draw(at: .zero)
-            // 黒のドロップシャドウ (offset 付き)
-            (dateString as NSString).draw(
-                at: CGPoint(x: originX + shadowOffset.width, y: originY + shadowOffset.height),
-                withAttributes: shadowAttrs
-            )
-            // オレンジの本体
-            (dateString as NSString).draw(
-                at: CGPoint(x: originX, y: originY),
-                withAttributes: attrs
-            )
+            (dateString as NSString).draw(at: origin, withAttributes: attrs.merging([.shadow: glow]) { $1 })
+            (dateString as NSString).draw(at: origin, withAttributes: attrs.merging([.shadow: drop]) { $1 })
         }
     }
 

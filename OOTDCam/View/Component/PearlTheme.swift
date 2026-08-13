@@ -34,6 +34,9 @@ enum Pearl {
         endPoint: UnitPoint(x: 1, y: 0.65)
     )
 
+    /// 上部の帯の高さ。撮影・編集で揃えないとプレートの開始位置が画面間でずれる
+    static let topBarHeight: CGFloat = 48
+
     /// 撮影フラッシュの膜 (iris と同じ3色に透過を乗せたもの・115deg)
     static let flash = LinearGradient(
         stops: [

@@ -12,6 +12,10 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
+            // クロスフェード中は前後の画面が両方半透明になり、背後のウィンドウの地 (黒) が
+            // 透けて一瞬暗く沈む。遷移の外側に不透明なパール地を常駐させて防ぐ
+            PearlBackground()
+
             switch coordinator.screen {
             case .camera:
                 CameraView(onPhotoTaken: coordinator.didCapture)
