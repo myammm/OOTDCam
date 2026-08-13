@@ -8,68 +8,39 @@
 import SwiftUI
 
 struct CameraView: View {
-    let onPhotoTaken: (UIImage) -> Void
+    let onPhotoTaken: (CapturedPhoto) -> Void
     @StateObject private var viewModel = CameraViewModel()
-    /// 3:4 可視領域のグローバル座標 (= フルスクリーンプレビューレイヤーの座標と等価)
-    @State private var visibleCameraRect: CGRect = .zero
+    /// プレビュー領域のサイズ。プレビューはガラス縁の内側にレイアウトするので、
+    /// 可視矩形はレイヤーのローカル座標 (origin: .zero) で渡す
+    @State private var previewSize: CGSize = .zero
 
     var body: some View {
         ZStack {
-            Color(red: 0.03, green: 0.03, blue: 0.06).ignoresSafeArea() // ベース #08080f
-
-            // フルスクリーンの単一プレビュー (.resizeAspectFill)
-            // 上下クロームの裏側にもカメラが見えるので、半透明クロームで透ける
-            CameraPreviewView(service: viewModel.service, gravity: .resizeAspectFill)
-                .ignoresSafeArea()
+            PearlBackground()
 
             VStack(spacing: 0) {
-                StatusBar()
+                // 上部の帯は薄くし、余白を下側に寄せる
+                Wordmark()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
 
-                // 3:4 可視領域 (透明 — フルスクリーンプレビューが透けて見える)
-                ZStack {
-                    // 領域のグローバル座標を取得して保存範囲計算用に保持
-                    GeometryReader { geo in
-                        Color.clear
-                            .onAppear { visibleCameraRect = geo.frame(in: .global) }
-                            .onChange(of: geo.frame(in: .global)) { _, newRect in
-                                visibleCameraRect = newRect
-                            }
-                    }
+                cameraPlate
 
-                    // 撮影ガイド (4隅のブラケット含む)
-                    GuideOverlayView()
+                Text("♡に顔、線に足先")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(Pearl.inkSoft)
+                    .padding(.top, 14)
 
-                    // 日付スタンプ (右下)
-                    DateStamp()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                        .padding(.bottom, 14)
-                        .padding(.trailing, 14)
-
-                    // キラキラ演出
-                    if viewModel.showSparkles {
-                        SparkleOverlay()
-                            .frame(width: 120, height: 120)
-                            .transition(.opacity)
-                    }
-                }
-                .aspectRatio(3.0 / 4.0, contentMode: .fit)
-
+                // シャッターは説明文と画面下端の間で上下センター
                 Spacer(minLength: 0)
 
-                CaptionStrip()
+                ShutterButton(isAnimating: viewModel.isShutterAnimating) {
+                    viewModel.send(.takePhoto(visibleRect: CGRect(origin: .zero, size: previewSize)))
+                }
 
-                ShutterArea(
-                    isAnimating: viewModel.isShutterAnimating,
-                    onTap: {
-                        viewModel.send(.takePhoto(visibleRect: visibleCameraRect))
-                    }
-                )
-
-                // 下部余白 (リキッドグラス)
-                Color.clear
-                    .frame(height: 26)
-                    .background(Color.black.opacity(0.55))
+                Spacer(minLength: 0)
             }
+            .padding(.bottom, 10)
         }
         .alert("カメラ権限がありません", isPresented: $viewModel.cameraPermissionDenied) {
             Button("設定を開く") {
@@ -95,32 +66,53 @@ struct CameraView: View {
         }
         .onAppear { viewModel.send(.onAppear) }
         .onDisappear { viewModel.send(.onDisappear) }
-        .onChange(of: viewModel.lastCapturedImage) { _, image in
-            if let image {
-                onPhotoTaken(image)
-                viewModel.lastCapturedImage = nil
+        .onChange(of: viewModel.lastCapturedPhoto) { _, photo in
+            if let photo {
+                onPhotoTaken(photo)
+                viewModel.lastCapturedPhoto = nil
             }
         }
     }
-}
 
-// MARK: - Status Bar (fig.cam タイトルのみ)
-struct StatusBar: View {
-    var body: some View {
-        Text("★ fig.cam ★")
-            .font(.system(size: 10, weight: .semibold, design: .monospaced))
-            .tracking(1.5)
-            .foregroundStyle(guidePink)
-            .shadow(color: guidePink.opacity(0.4), radius: 3)
-            .padding(.bottom, 8)
-            .frame(height: 40)
-            .frame(maxWidth: .infinity)
-            .background(Color.black.opacity(0.55))
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(Color(red: 0.541, green: 0.169, blue: 0.886).opacity(0.25))
-                    .frame(height: 1)
+    // MARK: - Camera Plate (ガラス縁の 3:4 プレビュー)
+
+    private var cameraPlate: some View {
+        ZStack {
+            // セッション起動前のプレースホルダ
+            Color(.photoBackdrop)
+
+            // 3:4 のプレビュー (センサーも 3:4 なので aspectFill でほぼ全域が映る)
+            CameraPreviewView(service: viewModel.service, gravity: .resizeAspectFill)
+
+            GeometryReader { geo in
+                Color.clear
+                    .onAppear { previewSize = geo.size }
+                    .onChange(of: geo.size) { _, newSize in
+                        previewSize = newSize
+                    }
             }
+
+            GuideOverlayView()
+
+            DateStamp()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .padding(.bottom, 12)
+                .padding(.trailing, 12)
+
+            if viewModel.showSparkles {
+                SparkleOverlay()
+                    .frame(width: 120, height: 120)
+                    .transition(.opacity)
+            }
+
+            // 撮影フラッシュの膜 (最前面)
+            Pearl.flash
+                .opacity(viewModel.showFlash ? 1 : 0)
+                .allowsHitTesting(false)
+        }
+        .aspectRatio(3.0 / 4.0, contentMode: .fit)
+        .pearlPlate()
+        .padding(.horizontal, 10)
     }
 }
 
@@ -148,68 +140,51 @@ struct DateStamp: View {
     }
 }
 
-// MARK: - Caption Strip
-struct CaptionStrip: View {
-    var body: some View {
-        Text("♡に顔、点線に足先を合わせて撮ってね")
-            .font(.system(size: 10, weight: .regular, design: .monospaced))
-            .tracking(0.5)
-            .foregroundStyle(Color.white.opacity(0.7))
-            .frame(maxWidth: .infinity)
-            .frame(height: 44)
-            .background(Color.black.opacity(0.55))
-            .overlay(alignment: .top) {
-                Rectangle()
-                    .fill(Color(red: 0.541, green: 0.169, blue: 0.886).opacity(0.25))
-                    .frame(height: 1)
-            }
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(Color(red: 0.541, green: 0.169, blue: 0.886).opacity(0.25))
-                    .frame(height: 1)
-            }
-    }
-}
-
-// MARK: - Shutter Area
-struct ShutterArea: View {
-    let isAnimating: Bool
-    let onTap: () -> Void
-
-    var body: some View {
-        ZStack {
-            ShutterButton(isAnimating: isAnimating, onTap: onTap)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 130)
-        .background(Color.black.opacity(0.55))
-    }
-}
-
-// MARK: - Shutter Button (シアン系で維持)
+// MARK: - Shutter Button (ガラス球 + 虹色リム)
 struct ShutterButton: View {
     let isAnimating: Bool
     let onTap: () -> Void
 
     var body: some View {
-        Circle()
-            .fill(.ultraThinMaterial)
-            .frame(width: 90, height: 90)
-            .overlay(
-                Circle()
-                    .strokeBorder(
-                        AngularGradient(
-                            gradient: Gradient(colors: [.cyan, .purple, .pink, .cyan]),
-                            center: .center
-                        ),
-                        lineWidth: 2
-                    )
-                    .blur(radius: isAnimating ? 8 : 2)
-                    .opacity(isAnimating ? 1 : 0.6)
-            )
-            .shadow(color: .cyan.opacity(0.5), radius: 12)
-            .scaleEffect(isAnimating ? 0.85 : 1.0)
-            .onTapGesture { onTap() }
+        ZStack {
+            // 虹色リング (iris トークン参照)。ロゴ・完了ボタンと同色になるため、
+            // 主役性はサイズと外側のピンクの発光で保つ
+            Circle()
+                .stroke(Pearl.iris, lineWidth: 3)
+                .frame(width: 88, height: 88)
+                .opacity(0.9)
+                .shadow(color: Pearl.glowPink.opacity(0.7), radius: isAnimating ? 14 : 8)
+
+            // ガラス球
+            Circle()
+                .fill(RadialGradient(
+                    stops: [
+                        .init(color: .white, location: 0),
+                        .init(color: Color(.shutterOrb1), location: 0.22),
+                        .init(color: Color(.shutterOrb2), location: 0.52),
+                        .init(color: Color(.shutterOrb3), location: 0.78),
+                        .init(color: Color(.shutterOrb4), location: 1)
+                    ],
+                    center: UnitPoint(x: 0.34, y: 0.24),
+                    startRadius: 0,
+                    endRadius: 64
+                ))
+                .frame(width: 80, height: 80)
+                .overlay(Circle().stroke(Color.white.opacity(0.8), lineWidth: 1))
+                .shadow(color: Pearl.shadow.opacity(0.5), radius: 11, y: 5)
+
+            // スペキュラハイライト
+            Ellipse()
+                .fill(Color.white.opacity(0.9))
+                .frame(width: 24, height: 15)
+                .blur(radius: 2)
+                .offset(x: -11, y: -22)
+        }
+        .scaleEffect(isAnimating ? 0.88 : 1.0)
+        .contentShape(Circle())
+        .onTapGesture { onTap() }
+        .accessibilityLabel("シャッター")
+        .accessibilityAddTraits(.isButton)
     }
 }
 

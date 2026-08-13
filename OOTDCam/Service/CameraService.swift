@@ -41,25 +41,43 @@ final class CameraService: NSObject, ObservableObject {
         session.commitConfiguration()
     }
 
+    /// startRunning / stopRunning はどちらも完了までブロックするので、
+    /// メインスレッドでは呼ばず専用の直列キューで順序を保証して実行する
+    private let sessionQueue = DispatchQueue(label: "jp.linqinc.OOTDCam.cameraSession")
+
     func startSession() {
-        if !session.isRunning {
-            DispatchQueue.global(qos: .background).async {
+        sessionQueue.async {
+            if !self.session.isRunning {
                 self.session.startRunning()
             }
         }
     }
 
     func stopSession() {
-        if session.isRunning {
-            session.stopRunning()
+        sessionQueue.async {
+            if self.session.isRunning {
+                self.session.stopRunning()
+            }
         }
     }
 
+    /// プレビューを固定する (最後のフレームが表示されたまま止まる)。
+    /// 撮影処理は端末を動かしていると多フレーム合成で1秒以上かかることがあるため、
+    /// シャッター直後に呼んで「撮れた」フィードバックを即座に返す
+    func freezePreview() {
+        activePreviewLayer?.connection?.isEnabled = false
+    }
+
+    func unfreezePreview() {
+        activePreviewLayer?.connection?.isEnabled = true
+    }
+
     /// 撮影 + 「プレビュー上の可視矩形」だけクロップして返す
-    /// - Parameter visibleRectInLayer: フルスクリーンプレビューレイヤー上の可視矩形 (= グローバル座標)
+    /// - Parameter visibleRectInLayer: プレビューレイヤーのローカル座標での可視矩形
+    ///   (プレビューがレイヤー全域を占める場合は origin .zero + レイヤーサイズ)
     func capturePhoto(
         visibleRectInLayer: CGRect,
-        completion: @escaping (UIImage?) -> Void
+        completion: @escaping (CapturedPhoto?) -> Void
     ) {
         // canonical な AVFoundation 変換: 各コーナーをセンサー正規化座標 [0,1]^2 に変換
         // (videoOrientation, gravity, scaling すべて内部で正しく扱ってくれる)
@@ -80,12 +98,26 @@ final class CameraService: NSObject, ObservableObject {
         let settings = AVCapturePhotoSettings()
         var processor: PhotoCaptureProcessor!
         processor = PhotoCaptureProcessor(completion: { [weak self] image in
-            let cropped = image.flatMap { Self.cropByNormalizedSensorRect($0, normalizedRect: normalizedRect) } ?? image
-            completion(cropped)
-            self?.currentProcessors.removeAll { $0 === processor }
+            // クロップと表示用縮小はバックグラウンドで行う
+            DispatchQueue.global(qos: .userInitiated).async {
+                let cropped = image.flatMap { Self.cropByNormalizedSensorRect($0, normalizedRect: normalizedRect) } ?? image
+                let photo = cropped.map {
+                    CapturedPhoto(original: $0, display: ImageCompositor.displayImage(from: $0))
+                }
+                completion(photo)
+            }
+            // currentProcessors はメインでのみ触る (append もメインから)
+            DispatchQueue.main.async {
+                self?.currentProcessors.removeAll { $0 === processor }
+            }
         })
         currentProcessors.append(processor)
-        photoOutput.capturePhoto(with: settings, delegate: processor)
+        // デリゲートは capturePhoto を呼んだスレッドで呼ばれる。メインから呼ぶと
+        // cgImageRepresentation() の写真デコードがメインで走り、動きのある撮影
+        // (多フレーム合成で処理が重い) で実際にハングするため、必ず sessionQueue から投入する
+        sessionQueue.async {
+            self.photoOutput.capturePhoto(with: settings, delegate: processor)
+        }
     }
 
     /// `captureDevicePointConverted` が返すのは raw センサー (landscape) 座標系の正規化値。

@@ -12,7 +12,8 @@ import Photos
 final class CameraViewModel: ObservableObject {
     @Published var isShutterAnimating: Bool = false
     @Published var showSparkles: Bool = false
-    @Published var lastCapturedImage: UIImage?
+    @Published var showFlash: Bool = false
+    @Published var lastCapturedPhoto: CapturedPhoto?
     
     let service = CameraService()
     
@@ -62,7 +63,8 @@ final class CameraViewModel: ObservableObject {
                 return
             }
             
-            // 両方OKならセッション開始
+            // 両方OKならセッション開始 (固定されたままのプレビューが残っていたら解除)
+            service.unfreezePreview()
             service.startSession()
         }
     }
@@ -109,14 +111,20 @@ final class CameraViewModel: ObservableObject {
     private func takePhoto(visibleRect: CGRect) {
         guard cameraAuthorized, photoLibraryAuthorized else { return }
 
+        // シャッター直後にプレビューを固定して「撮れた」を即座に見せる
+        service.freezePreview()
+
         // 撮影処理 (保存はレビュー画面の DONE で行うため、ここでは保持のみ)
         // capturePhoto のコールバックは AVFoundation のバックグラウンドキューで呼ばれるので、
         // @Published の変更は必ずメインへディスパッチする
-        service.capturePhoto(visibleRectInLayer: visibleRect) { [weak self] image in
+        service.capturePhoto(visibleRectInLayer: visibleRect) { [weak self] photo in
             DispatchQueue.main.async {
                 guard let self else { return }
-                if let image {
-                    self.lastCapturedImage = image
+                if let photo {
+                    self.lastCapturedPhoto = photo
+                } else {
+                    // 撮影失敗時はライブプレビューに戻して撮り直せるようにする
+                    self.service.unfreezePreview()
                 }
             }
         }
@@ -139,6 +147,16 @@ final class CameraViewModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             withAnimation {
                 self.showSparkles = false
+            }
+        }
+
+        // フラッシュの膜 (素早く出て、ゆっくり消える)
+        withAnimation(.easeOut(duration: 0.09)) {
+            showFlash = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeOut(duration: 0.4)) {
+                self.showFlash = false
             }
         }
     }

@@ -14,15 +14,15 @@ final class AppCoordinator: ObservableObject {
     }
 
     @Published var screen: Screen = .camera
-    @Published var capturedImage: UIImage?
+    @Published var capturedPhoto: CapturedPhoto?
 
-    func didCapture(_ image: UIImage) {
-        capturedImage = image
+    func didCapture(_ photo: CapturedPhoto) {
+        capturedPhoto = photo
         screen = .review
     }
 
     func retake() {
-        capturedImage = nil
+        capturedPhoto = nil
         screen = .camera
     }
 
@@ -31,7 +31,7 @@ final class AppCoordinator: ObservableObject {
     }
 
     func shootAgain() {
-        capturedImage = nil
+        capturedPhoto = nil
         screen = .camera
     }
 }

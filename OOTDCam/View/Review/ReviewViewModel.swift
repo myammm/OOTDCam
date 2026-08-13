@@ -8,7 +8,12 @@ import Photos
 
 @MainActor
 final class ReviewViewModel: ObservableObject {
+    /// 保存 (焼き込み) 用のフル解像度画像。メインスレッドでは描画しない
     let originalImage: UIImage
+
+    /// プレビュー表示用の軽量画像 (orientation .up・縮小済み)。撮影直後にバックグラウンドで生成済み。
+    /// フル解像度や orientation 付きのまま blur + mask に載せるとハング・ずれの原因になる
+    let displayImage: UIImage
 
     @Published var selectedShape: CoverShapeID = .heart
     @Published var selectedGradientID: String = "pink"
@@ -39,8 +44,9 @@ final class ReviewViewModel: ObservableObject {
         CoverPresets.gradient(id: selectedGradientID)
     }
 
-    init(image: UIImage) {
-        self.originalImage = image
+    init(photo: CapturedPhoto) {
+        self.originalImage = photo.original
+        self.displayImage = photo.display
     }
 
     // MARK: - Layout helpers
