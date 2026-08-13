@@ -63,7 +63,8 @@ final class CameraViewModel: ObservableObject {
                 return
             }
             
-            // 両方OKならセッション開始
+            // 両方OKならセッション開始 (固定されたままのプレビューが残っていたら解除)
+            service.unfreezePreview()
             service.startSession()
         }
     }
@@ -110,6 +111,9 @@ final class CameraViewModel: ObservableObject {
     private func takePhoto(visibleRect: CGRect) {
         guard cameraAuthorized, photoLibraryAuthorized else { return }
 
+        // シャッター直後にプレビューを固定して「撮れた」を即座に見せる
+        service.freezePreview()
+
         // 撮影処理 (保存はレビュー画面の DONE で行うため、ここでは保持のみ)
         // capturePhoto のコールバックは AVFoundation のバックグラウンドキューで呼ばれるので、
         // @Published の変更は必ずメインへディスパッチする
@@ -118,6 +122,9 @@ final class CameraViewModel: ObservableObject {
                 guard let self else { return }
                 if let photo {
                     self.lastCapturedPhoto = photo
+                } else {
+                    // 撮影失敗時はライブプレビューに戻して撮り直せるようにする
+                    self.service.unfreezePreview()
                 }
             }
         }

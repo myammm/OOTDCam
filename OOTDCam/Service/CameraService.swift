@@ -61,6 +61,17 @@ final class CameraService: NSObject, ObservableObject {
         }
     }
 
+    /// プレビューを固定する (最後のフレームが表示されたまま止まる)。
+    /// 撮影処理は端末を動かしていると多フレーム合成で1秒以上かかることがあるため、
+    /// シャッター直後に呼んで「撮れた」フィードバックを即座に返す
+    func freezePreview() {
+        activePreviewLayer?.connection?.isEnabled = false
+    }
+
+    func unfreezePreview() {
+        activePreviewLayer?.connection?.isEnabled = true
+    }
+
     /// 撮影 + 「プレビュー上の可視矩形」だけクロップして返す
     /// - Parameter visibleRectInLayer: プレビューレイヤーのローカル座標での可視矩形
     ///   (プレビューがレイヤー全域を占める場合は origin .zero + レイヤーサイズ)
@@ -87,8 +98,7 @@ final class CameraService: NSObject, ObservableObject {
         let settings = AVCapturePhotoSettings()
         var processor: PhotoCaptureProcessor!
         processor = PhotoCaptureProcessor(completion: { [weak self] image in
-            // デリゲートは capturePhoto を呼んだスレッド (=メイン) で呼ばれるため、
-            // クロップと表示用縮小は必ずバックグラウンドに逃がす
+            // クロップと表示用縮小はバックグラウンドで行う
             DispatchQueue.global(qos: .userInitiated).async {
                 let cropped = image.flatMap { Self.cropByNormalizedSensorRect($0, normalizedRect: normalizedRect) } ?? image
                 let photo = cropped.map {
@@ -96,10 +106,18 @@ final class CameraService: NSObject, ObservableObject {
                 }
                 completion(photo)
             }
-            self?.currentProcessors.removeAll { $0 === processor }
+            // currentProcessors はメインでのみ触る (append もメインから)
+            DispatchQueue.main.async {
+                self?.currentProcessors.removeAll { $0 === processor }
+            }
         })
         currentProcessors.append(processor)
-        photoOutput.capturePhoto(with: settings, delegate: processor)
+        // デリゲートは capturePhoto を呼んだスレッドで呼ばれる。メインから呼ぶと
+        // cgImageRepresentation() の写真デコードがメインで走り、動きのある撮影
+        // (多フレーム合成で処理が重い) で実際にハングするため、必ず sessionQueue から投入する
+        sessionQueue.async {
+            self.photoOutput.capturePhoto(with: settings, delegate: processor)
+        }
     }
 
     /// `captureDevicePointConverted` が返すのは raw センサー (landscape) 座標系の正規化値。
