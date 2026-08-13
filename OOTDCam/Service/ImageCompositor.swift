@@ -23,6 +23,30 @@ final class ImageCompositor {
         }
     }
 
+    /// プレビュー表示用の軽量画像を作る。orientation を .up に正規化しつつ長辺を maxLongSide px に縮小する。
+    /// フル解像度のまま SwiftUI の blur + mask に載せると描画が重くハングし、
+    /// さらに .right のままだと blur + mask の描画パスで orientation が適用されず
+    /// ぼかしレイヤーだけ 90度回転してずれるため、表示には必ずこれを使う
+    static func displayImage(from image: UIImage, maxLongSide: CGFloat = 1600) -> UIImage {
+        let pixelSize = CGSize(width: image.size.width * image.scale, height: image.size.height * image.scale)
+        let longSide = max(pixelSize.width, pixelSize.height)
+        guard longSide > 0 else { return image }
+        let ratio = min(1, maxLongSide / longSide)
+        if ratio >= 1, image.imageOrientation == .up { return image }
+        let targetSize = CGSize(
+            width: (pixelSize.width * ratio).rounded(),
+            height: (pixelSize.height * ratio).rounded()
+        )
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        format.preferredRange = .standard
+        let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
+    }
+
     /// 右下に '''YY.MM.DD 形式の日付スタンプを焼き込む (レトロデジカメ風)
     static func drawDateStamp(on image: UIImage, date: Date) -> UIImage {
         let format = UIGraphicsImageRendererFormat()

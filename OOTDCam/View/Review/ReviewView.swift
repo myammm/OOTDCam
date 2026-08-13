@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct ReviewView: View {
-    let image: UIImage
+    let photo: CapturedPhoto
     let onRetake: () -> Void
     let onDone: () -> Void
 
@@ -16,11 +16,11 @@ struct ReviewView: View {
     /// hasOverlay 切替時のアニメーション
     private static let overlayToggleAnimation: Animation = .spring(response: 0.35, dampingFraction: 0.72)
 
-    init(image: UIImage, onRetake: @escaping () -> Void, onDone: @escaping () -> Void) {
-        self.image = image
+    init(photo: CapturedPhoto, onRetake: @escaping () -> Void, onDone: @escaping () -> Void) {
+        self.photo = photo
         self.onRetake = onRetake
         self.onDone = onDone
-        _viewModel = StateObject(wrappedValue: ReviewViewModel(image: image))
+        _viewModel = StateObject(wrappedValue: ReviewViewModel(photo: photo))
     }
 
     var body: some View {
@@ -75,7 +75,7 @@ struct ReviewView: View {
             ZStack {
                 Color(.photoBackdrop)
 
-                Image(uiImage: viewModel.originalImage)
+                Image(uiImage: viewModel.displayImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
 
@@ -140,7 +140,7 @@ struct ReviewView: View {
 
         return ZStack {
             // ぼかしレイヤー: 写真をぼかしてシェイプでマスク
-            Image(uiImage: viewModel.originalImage)
+            Image(uiImage: viewModel.displayImage)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .blur(radius: viewModel.blur)
@@ -405,7 +405,10 @@ private struct ReviewHeader: View {
 struct ReviewView_Previews: PreviewProvider {
     static var previews: some View {
         ReviewView(
-            image: UIImage(systemName: "person.fill") ?? UIImage(),
+            photo: CapturedPhoto(
+                original: UIImage(systemName: "person.fill") ?? UIImage(),
+                display: UIImage(systemName: "person.fill") ?? UIImage()
+            ),
             onRetake: {},
             onDone: {}
         )

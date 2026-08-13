@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CameraView: View {
-    let onPhotoTaken: (UIImage) -> Void
+    let onPhotoTaken: (CapturedPhoto) -> Void
     @StateObject private var viewModel = CameraViewModel()
     /// プレビュー領域のサイズ。プレビューはガラス縁の内側にレイアウトするので、
     /// 可視矩形はレイヤーのローカル座標 (origin: .zero) で渡す
@@ -64,10 +64,10 @@ struct CameraView: View {
         }
         .onAppear { viewModel.send(.onAppear) }
         .onDisappear { viewModel.send(.onDisappear) }
-        .onChange(of: viewModel.lastCapturedImage) { _, image in
-            if let image {
-                onPhotoTaken(image)
-                viewModel.lastCapturedImage = nil
+        .onChange(of: viewModel.lastCapturedPhoto) { _, photo in
+            if let photo {
+                onPhotoTaken(photo)
+                viewModel.lastCapturedPhoto = nil
             }
         }
     }
@@ -179,7 +179,10 @@ struct ShutterButton: View {
                 .offset(x: -11, y: -22)
         }
         .scaleEffect(isAnimating ? 0.88 : 1.0)
+        .contentShape(Circle())
         .onTapGesture { onTap() }
+        .accessibilityLabel("シャッター")
+        .accessibilityAddTraits(.isButton)
     }
 }
 

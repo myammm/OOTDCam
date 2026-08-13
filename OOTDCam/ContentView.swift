@@ -17,9 +17,9 @@ struct ContentView: View {
                 CameraView(onPhotoTaken: coordinator.didCapture)
                     .transition(.opacity)
             case .review:
-                if let image = coordinator.capturedImage {
+                if let photo = coordinator.capturedPhoto {
                     ReviewView(
-                        image: image,
+                        photo: photo,
                         onRetake: coordinator.retake,
                         onDone: coordinator.didFinishSaving
                     )

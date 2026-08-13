@@ -41,17 +41,23 @@ final class CameraService: NSObject, ObservableObject {
         session.commitConfiguration()
     }
 
+    /// startRunning / stopRunning はどちらも完了までブロックするので、
+    /// メインスレッドでは呼ばず専用の直列キューで順序を保証して実行する
+    private let sessionQueue = DispatchQueue(label: "jp.linqinc.OOTDCam.cameraSession")
+
     func startSession() {
-        if !session.isRunning {
-            DispatchQueue.global(qos: .background).async {
+        sessionQueue.async {
+            if !self.session.isRunning {
                 self.session.startRunning()
             }
         }
     }
 
     func stopSession() {
-        if session.isRunning {
-            session.stopRunning()
+        sessionQueue.async {
+            if self.session.isRunning {
+                self.session.stopRunning()
+            }
         }
     }
 
@@ -60,7 +66,7 @@ final class CameraService: NSObject, ObservableObject {
     ///   (プレビューがレイヤー全域を占める場合は origin .zero + レイヤーサイズ)
     func capturePhoto(
         visibleRectInLayer: CGRect,
-        completion: @escaping (UIImage?) -> Void
+        completion: @escaping (CapturedPhoto?) -> Void
     ) {
         // canonical な AVFoundation 変換: 各コーナーをセンサー正規化座標 [0,1]^2 に変換
         // (videoOrientation, gravity, scaling すべて内部で正しく扱ってくれる)
@@ -81,8 +87,15 @@ final class CameraService: NSObject, ObservableObject {
         let settings = AVCapturePhotoSettings()
         var processor: PhotoCaptureProcessor!
         processor = PhotoCaptureProcessor(completion: { [weak self] image in
-            let cropped = image.flatMap { Self.cropByNormalizedSensorRect($0, normalizedRect: normalizedRect) } ?? image
-            completion(cropped)
+            // デリゲートは capturePhoto を呼んだスレッド (=メイン) で呼ばれるため、
+            // クロップと表示用縮小は必ずバックグラウンドに逃がす
+            DispatchQueue.global(qos: .userInitiated).async {
+                let cropped = image.flatMap { Self.cropByNormalizedSensorRect($0, normalizedRect: normalizedRect) } ?? image
+                let photo = cropped.map {
+                    CapturedPhoto(original: $0, display: ImageCompositor.displayImage(from: $0))
+                }
+                completion(photo)
+            }
             self?.currentProcessors.removeAll { $0 === processor }
         })
         currentProcessors.append(processor)

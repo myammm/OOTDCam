@@ -12,7 +12,7 @@ import Photos
 final class CameraViewModel: ObservableObject {
     @Published var isShutterAnimating: Bool = false
     @Published var showSparkles: Bool = false
-    @Published var lastCapturedImage: UIImage?
+    @Published var lastCapturedPhoto: CapturedPhoto?
     
     let service = CameraService()
     
@@ -112,11 +112,11 @@ final class CameraViewModel: ObservableObject {
         // 撮影処理 (保存はレビュー画面の DONE で行うため、ここでは保持のみ)
         // capturePhoto のコールバックは AVFoundation のバックグラウンドキューで呼ばれるので、
         // @Published の変更は必ずメインへディスパッチする
-        service.capturePhoto(visibleRectInLayer: visibleRect) { [weak self] image in
+        service.capturePhoto(visibleRectInLayer: visibleRect) { [weak self] photo in
             DispatchQueue.main.async {
                 guard let self else { return }
-                if let image {
-                    self.lastCapturedImage = image
+                if let photo {
+                    self.lastCapturedPhoto = photo
                 }
             }
         }
