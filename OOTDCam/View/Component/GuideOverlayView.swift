@@ -14,7 +14,8 @@ let guidePurple = Color(red: 0.541, green: 0.361, blue: 0.965)
 let guidePink = Color(hex: "#FF2D88")
 
 struct GuideOverlayView: View {
-    @State private var breath: CGFloat = 1.0
+    var highlighted: Bool = false
+    @State private var floatOffset: CGFloat = 0
 
     private let neonGradient = LinearGradient(
         colors: [.cyan, .purple, guidePink],
@@ -34,9 +35,8 @@ struct GuideOverlayView: View {
             let bracketHeight: CGFloat = 8
 
             ZStack {
-                // 4隅のビューファインダーブラケット (位置合わせに影響しないのでブレスアニメ対象)
+                // 4隅のビューファインダーブラケット
                 ViewfinderCorners()
-                    .scaleEffect(breath, anchor: .center)
 
                 // 顔ガイド (グラデのハート + 内側クロスヘア)
                 faceGuide(centerX: centerX, centerY: faceY, screenWidth: width)
@@ -47,9 +47,16 @@ struct GuideOverlayView: View {
                 // FEET ラベル (左端、足元横破線まで点線で接続)
                 feetLabelLeft(y: feetLineY, screenWidth: width, feetLineWidth: feetLineWidth)
             }
-            .onAppear {
-                withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
-                    breath = 1.04
+            .onChange(of: highlighted) { _, newValue in
+                if newValue {
+                    floatOffset = 5
+                    withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                        floatOffset = -5
+                    }
+                } else {
+                    withAnimation(.easeInOut(duration: 0.6)) {
+                        floatOffset = 0
+                    }
                 }
             }
         }
@@ -97,6 +104,7 @@ struct GuideOverlayView: View {
 
         // FACE ピル
         labelPill(text: "♡ FACE")
+            .offset(y: highlighted ? floatOffset : 0)
             .position(x: pillCenterX, y: centerY)
     }
 
@@ -151,30 +159,37 @@ struct GuideOverlayView: View {
         )
 
         labelPill(text: "FEET")
+            .offset(y: highlighted ? floatOffset : 0)
             .position(x: pillCenterX, y: y)
     }
 
     // MARK: - ラベルピル (共通)
     private func labelPill(text: String) -> some View {
-        Text(text)
-            .font(.system(size: 9, weight: .bold, design: .monospaced))
+        let fontSize: CGFloat = highlighted ? 12 : 9
+        let hPad: CGFloat = highlighted ? 12 : 8
+        let vPad: CGFloat = highlighted ? 5 : 3
+        let color = highlighted ? guidePink : guidePurple
+
+        return Text(text)
+            .font(.system(size: fontSize, weight: .bold, design: .monospaced))
             .tracking(1.0)
-            .foregroundStyle(guidePurple)
-            .shadow(color: guidePurple.opacity(0.6), radius: 3)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
+            .foregroundStyle(color)
+            .shadow(color: color.opacity(0.6), radius: highlighted ? 6 : 3)
+            .padding(.horizontal, hPad)
+            .padding(.vertical, vPad)
             .background(
                 Capsule()
-                    .fill(guidePurple.opacity(0.18))
+                    .fill(color.opacity(0.18))
                     .overlay(
                         Capsule()
-                            .stroke(guidePurple.opacity(0.45), lineWidth: 1)
+                            .stroke(color.opacity(highlighted ? 0.7 : 0.45), lineWidth: highlighted ? 1.5 : 1)
                     )
             )
             .background(
                 Capsule()
                     .fill(.ultraThinMaterial)
             )
+            .animation(.easeInOut(duration: 0.6), value: highlighted)
     }
 }
 

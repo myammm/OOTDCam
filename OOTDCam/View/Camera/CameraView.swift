@@ -12,6 +12,8 @@ struct CameraView: View {
     @StateObject private var viewModel = CameraViewModel()
     /// 3:4 可視領域のグローバル座標 (= フルスクリーンプレビューレイヤーの座標と等価)
     @State private var visibleCameraRect: CGRect = .zero
+    @AppStorage("hasUsedCamera") private var hasUsedCamera = false
+    @State private var captionHighlighted = false
 
     var body: some View {
         ZStack {
@@ -37,7 +39,7 @@ struct CameraView: View {
                     }
 
                     // 撮影ガイド (4隅のブラケット含む)
-                    GuideOverlayView()
+                    GuideOverlayView(highlighted: captionHighlighted)
 
                     // 日付スタンプ (右下)
                     DateStamp()
@@ -56,12 +58,16 @@ struct CameraView: View {
 
                 Spacer(minLength: 0)
 
-                CaptionStrip()
+                CaptionStrip(highlighted: captionHighlighted)
 
                 ShutterArea(
                     isAnimating: viewModel.isShutterAnimating,
                     onTap: {
                         viewModel.send(.takePhoto(visibleRect: visibleCameraRect))
+                        if captionHighlighted {
+                            captionHighlighted = false
+                            hasUsedCamera = true
+                        }
                     }
                 )
 
@@ -93,7 +99,10 @@ struct CameraView: View {
         } message: {
             Text("写真を保存するには設定で許可が必要です")
         }
-        .onAppear { viewModel.send(.onAppear) }
+        .onAppear {
+            viewModel.send(.onAppear)
+            captionHighlighted = !hasUsedCamera
+        }
         .onDisappear { viewModel.send(.onDisappear) }
         .onChange(of: viewModel.lastCapturedImage) { _, image in
             if let image {
@@ -150,11 +159,14 @@ struct DateStamp: View {
 
 // MARK: - Caption Strip
 struct CaptionStrip: View {
+    var highlighted: Bool
+
     var body: some View {
         Text("♡に顔、点線に足先を合わせて撮ってね")
-            .font(.system(size: 10, weight: .regular, design: .monospaced))
+            .font(.system(size: highlighted ? 13 : 10, weight: highlighted ? .semibold : .regular, design: .monospaced))
             .tracking(0.5)
-            .foregroundStyle(Color.white.opacity(0.7))
+            .foregroundStyle(highlighted ? guidePink : Color.white.opacity(0.7))
+            .shadow(color: highlighted ? guidePink.opacity(0.5) : .clear, radius: 6)
             .frame(maxWidth: .infinity)
             .frame(height: 44)
             .background(Color.black.opacity(0.55))
@@ -168,6 +180,7 @@ struct CaptionStrip: View {
                     .fill(Color(red: 0.541, green: 0.169, blue: 0.886).opacity(0.25))
                     .frame(height: 1)
             }
+            .animation(.easeInOut(duration: 0.6), value: highlighted)
     }
 }
 

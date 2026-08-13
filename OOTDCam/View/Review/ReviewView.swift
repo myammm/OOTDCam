@@ -12,6 +12,8 @@ struct ReviewView: View {
 
     @StateObject private var viewModel: ReviewViewModel
     @State private var dragStartCenter: CGPoint?
+    @AppStorage("hasUsedEditor") private var hasUsedEditor = false
+    @State private var editorHintHighlighted = false
 
     /// hasOverlay 切替時のアニメーション
     private static let overlayToggleAnimation: Animation = .spring(response: 0.35, dampingFraction: 0.72)
@@ -39,9 +41,11 @@ struct ReviewView: View {
                 bottomControls
 
                 Text("シェイプを選んで顔にかぶせてね・ドラッグで移動")
-                    .font(.system(size: 8, weight: .regular, design: .monospaced))
+                    .font(.system(size: editorHintHighlighted ? 11 : 8, weight: editorHintHighlighted ? .semibold : .regular, design: .monospaced))
                     .tracking(0.5)
-                    .foregroundStyle(.white.opacity(0.3))
+                    .foregroundStyle(.white.opacity(editorHintHighlighted ? 0.85 : 0.3))
+                    .shadow(color: editorHintHighlighted ? Color.pink.opacity(0.5) : .clear, radius: 6)
+                    .animation(.easeInOut(duration: 0.6), value: editorHintHighlighted)
                     .frame(maxWidth: .infinity)
                     .frame(height: 24)
                     .background(Color(red: 0.055, green: 0.055, blue: 0.102))
@@ -53,6 +57,15 @@ struct ReviewView: View {
             Button("OK") { viewModel.saveErrorMessage = nil }
         } message: {
             Text(viewModel.saveErrorMessage ?? "")
+        }
+        .onAppear {
+            editorHintHighlighted = !hasUsedEditor
+        }
+        .onChange(of: viewModel.hasOverlay) { _, newValue in
+            if newValue, editorHintHighlighted {
+                editorHintHighlighted = false
+                hasUsedEditor = true
+            }
         }
     }
 
