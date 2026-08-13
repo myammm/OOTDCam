@@ -56,7 +56,8 @@ final class CameraService: NSObject, ObservableObject {
     }
 
     /// 撮影 + 「プレビュー上の可視矩形」だけクロップして返す
-    /// - Parameter visibleRectInLayer: フルスクリーンプレビューレイヤー上の可視矩形 (= グローバル座標)
+    /// - Parameter visibleRectInLayer: プレビューレイヤーのローカル座標での可視矩形
+    ///   (プレビューがレイヤー全域を占める場合は origin .zero + レイヤーサイズ)
     func capturePhoto(
         visibleRectInLayer: CGRect,
         completion: @escaping (UIImage?) -> Void

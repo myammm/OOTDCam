@@ -12,45 +12,30 @@ struct DoneView: View {
 
     var body: some View {
         ZStack {
-            RadialGradient(
-                colors: [
-                    Color(red: 0.541, green: 0.361, blue: 0.965).opacity(0.15),
-                    Color(red: 0.03, green: 0.03, blue: 0.06)
-                ],
-                center: .init(x: 0.5, y: 0.4),
-                startRadius: 0,
-                endRadius: 500
-            )
-            .ignoresSafeArea()
+            PearlBackground()
 
             VStack(spacing: 24) {
                 Text("✨")
                     .font(.system(size: 64))
 
-                Text("SAVED!")
-                    .font(.system(size: 18, weight: .bold, design: .monospaced))
-                    .tracking(3)
-                    .foregroundStyle(Color.pink)
-                    .shadow(color: .pink.opacity(0.4), radius: 8)
+                Text("保存しました！")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .tracking(1)
+                    .foregroundStyle(Pearl.ink)
 
                 Button(action: onShootAgain) {
-                    Text("SHOOT AGAIN ★")
-                        .font(.system(size: 12, weight: .bold, design: .monospaced))
-                        .tracking(2)
-                        .foregroundStyle(.white)
+                    Text("もう一度撮る")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .tracking(0.5)
+                        .foregroundStyle(Pearl.inkDeep)
                         .padding(.horizontal, 36)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, 13)
                         .background(
                             Capsule()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.pink, Color(red: 0.541, green: 0.361, blue: 0.965)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .shadow(color: .pink.opacity(0.27), radius: 16)
+                                .fill(Pearl.iris)
+                                .shadow(color: Color(.irisButtonGlow).opacity(0.8), radius: 12, y: 5)
                         )
+                        .overlay(Capsule().stroke(Color.white.opacity(0.7), lineWidth: 1))
                 }
                 .padding(.top, 20)
             }

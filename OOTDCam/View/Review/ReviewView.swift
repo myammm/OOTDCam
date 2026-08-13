@@ -25,7 +25,7 @@ struct ReviewView: View {
 
     var body: some View {
         ZStack {
-            Color(red: 0.03, green: 0.03, blue: 0.06).ignoresSafeArea()
+            PearlBackground()
 
             VStack(spacing: 0) {
                 ReviewHeader(
@@ -35,18 +35,18 @@ struct ReviewView: View {
                 )
 
                 photoArea
+                    .aspectRatio(3.0 / 4.0, contentMode: .fit)
+                    .pearlPlate()
+                    .padding(.horizontal, 10)
 
-                bottomControls
+                controlPad
+
+                Spacer(minLength: 0)
 
                 Text("シェイプを選んで顔にかぶせてね・ドラッグで移動")
-                    .font(.system(size: 8, weight: .regular, design: .monospaced))
-                    .tracking(0.5)
-                    .foregroundStyle(.white.opacity(0.3))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 24)
-                    .background(Color(red: 0.055, green: 0.055, blue: 0.102))
-
-                Color(red: 0.03, green: 0.03, blue: 0.06).frame(height: 16)
+                    .font(.system(size: 11, weight: .regular, design: .rounded))
+                    .foregroundStyle(Pearl.inkSoft.opacity(0.8))
+                    .padding(.bottom, 10)
             }
         }
         .alert("保存に失敗", isPresented: .constant(viewModel.saveErrorMessage != nil)) {
@@ -73,15 +73,7 @@ struct ReviewView: View {
     private var photoArea: some View {
         GeometryReader { geo in
             ZStack {
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.10, green: 0.06, blue: 0.16),
-                        Color(red: 0.05, green: 0.09, blue: 0.13),
-                        Color(red: 0.09, green: 0.06, blue: 0.16)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                Color(.photoBackdrop)
 
                 Image(uiImage: viewModel.originalImage)
                     .resizable()
@@ -100,14 +92,14 @@ struct ReviewView: View {
                     .allowsHitTesting(viewModel.hasOverlay)
 
                 // 右上のコントロール (+/−/✕)
-                HStack(spacing: 5) {
-                    circleControl(label: "−", color: .cyan) {
+                HStack(spacing: 6) {
+                    circleControl(label: "−") {
                         viewModel.adjustScale(by: -0.15)
                     }
-                    circleControl(label: "+", color: .cyan) {
+                    circleControl(label: "+") {
                         viewModel.adjustScale(by: 0.15)
                     }
-                    circleControl(label: "✕", color: Color(red: 1, green: 0, blue: 0.25)) {
+                    circleControl(label: "✕") {
                         withAnimation(Self.overlayToggleAnimation) {
                             viewModel.removeOverlay()
                         }
@@ -192,188 +184,168 @@ struct ReviewView: View {
         .frame(width: areaSize.width, height: areaSize.height)
     }
 
-    private func circleControl(label: String, color: Color, action: @escaping () -> Void) -> some View {
+    private func circleControl(label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 14, weight: .regular, design: .monospaced))
-                .foregroundStyle(color)
-                .frame(width: 30, height: 30)
-                .background(
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .overlay(
-                            Circle()
-                                .stroke(color.opacity(0.4), lineWidth: 1)
-                        )
-                )
         }
+        .buttonStyle(PearlCircleButtonStyle(size: 30))
     }
 
-    // MARK: - Bottom Controls
+    // MARK: - Control Pad (左ラベル列なし・画面幅いっぱい)
 
-    private var bottomControls: some View {
-        VStack(spacing: 7) {
+    private var controlPad: some View {
+        VStack(spacing: 12) {
             shapeRow
-            colorRow
-            sliderRow(label: "SHEER", labelColor: .pink, leftHint: "透", rightHint: "濃") {
-                AnyView(
-                    Slider(value: $viewModel.sheer, in: 0.15...0.85, step: 0.05)
-                        .tint(Color(red: 0.541, green: 0.361, blue: 0.965))
-                )
-            }
-            sliderRow(label: "BLUR", labelColor: .cyan, leftHint: "弱", rightHint: "強") {
-                AnyView(
-                    Slider(value: $viewModel.blur, in: 0...30, step: 1)
-                        .tint(.cyan)
-                )
+            colorDots
+            VStack(spacing: 9) {
+                pearlSlider("濃さ", value: $viewModel.sheer, in: 0.15...0.85, step: 0.05)
+                pearlSlider("ぼかし", value: $viewModel.blur, in: 0...30, step: 1)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.top, 8)
-        .padding(.bottom, 4)
-        .background(Color(red: 0.055, green: 0.055, blue: 0.102))
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(Color(red: 0.541, green: 0.169, blue: 0.886).opacity(0.25))
-                .frame(height: 1)
-        }
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 6)
     }
+
+    // MARK: - Shape Tiles (グミ質感)
 
     private var shapeRow: some View {
-        HStack(spacing: 6) {
-            sectionLabel("SHAPE", color: .pink)
-            HStack(spacing: 5) {
-                offButton
-                ForEach(CoverShapeID.allCases) { shapeID in
-                    shapeButton(shapeID)
+        HStack(spacing: 8) {
+            gummyTile(isSelected: !viewModel.hasOverlay) {
+                withAnimation(Self.overlayToggleAnimation) {
+                    viewModel.disableOverlay()
                 }
-            }
-        }
-    }
-
-    private var offButton: some View {
-        let isSelected = !viewModel.hasOverlay
-        return Button {
-            withAnimation(Self.overlayToggleAnimation) {
-                viewModel.disableOverlay()
-            }
-        } label: {
-            VStack(spacing: 1) {
+            } icon: { selected in
                 Text("✕")
-                    .font(.system(size: 15, weight: .regular, design: .monospaced))
-                Text("OFF")
-                    .font(.system(size: 7, weight: .regular, design: .monospaced))
-                    .tracking(0.5)
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundStyle(iconColor(selected: selected))
             }
-            .foregroundStyle(isSelected ? Color.pink : Color(white: 0.5))
-            .frame(maxWidth: .infinity)
-            .frame(height: 36)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(isSelected ? Color.pink.opacity(0.12) : Color.white.opacity(0.06))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(
-                                isSelected ? Color.pink.opacity(0.53) : Color.white.opacity(0.08),
-                                lineWidth: 1.5
-                            )
-                    )
-            )
-        }
-    }
 
-    private func shapeButton(_ shapeID: CoverShapeID) -> some View {
-        let isSelected = viewModel.hasOverlay && viewModel.selectedShape == shapeID
-        return Button {
-            withAnimation(Self.overlayToggleAnimation) {
-                viewModel.selectShape(shapeID, areaSize: lastPhotoAreaSize)
-            }
-        } label: {
-            VStack(spacing: 1) {
-                Text(shapeID.label)
-                    .font(.system(size: 15))
-                Text(shapeID.name)
-                    .font(.system(size: 7, weight: .regular, design: .monospaced))
-                    .tracking(0.5)
-            }
-            .foregroundStyle(isSelected ? Color.pink : Color(white: 0.5))
-            .frame(maxWidth: .infinity)
-            .frame(height: 36)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(isSelected ? Color.pink.opacity(0.12) : Color.white.opacity(0.06))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(
-                                isSelected ? Color.pink.opacity(0.53) : Color.white.opacity(0.08),
-                                lineWidth: 1.5
-                            )
-                    )
-            )
-        }
-    }
-
-    private var colorRow: some View {
-        HStack(spacing: 6) {
-            sectionLabel("COLOR", color: .cyan)
-            HStack(spacing: 5) {
-                ForEach(CoverPresets.gradients) { gradient in
-                    colorButton(gradient)
+            ForEach(CoverShapeID.allCases) { shapeID in
+                let isSelected = viewModel.hasOverlay && viewModel.selectedShape == shapeID
+                gummyTile(isSelected: isSelected) {
+                    withAnimation(Self.overlayToggleAnimation) {
+                        viewModel.selectShape(shapeID, areaSize: lastPhotoAreaSize)
+                    }
+                } icon: { selected in
+                    shapeIcon(shapeID, selected: selected)
                 }
             }
         }
     }
 
-    private func colorButton(_ gradient: CoverGradient) -> some View {
+    private func iconColor(selected: Bool) -> Color {
+        selected ? Color(.shapeIconSelected) : Color(.shapeIconMuted)
+    }
+
+    private func shapeIcon(_ shapeID: CoverShapeID, selected: Bool) -> some View {
+        let nominal = shapeID.nominalSize
+        let width: CGFloat = 24
+        return CoverShape(id: shapeID)
+            .fill(iconColor(selected: selected))
+            .frame(width: width, height: width * nominal.height / nominal.width)
+    }
+
+    private func gummyTile(
+        isSelected: Bool,
+        action: @escaping () -> Void,
+        @ViewBuilder icon: @escaping (Bool) -> some View
+    ) -> some View {
+        Button(action: action) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                    .fill(isSelected
+                        ? LinearGradient(
+                            colors: [Color(.tileSelectedPink), Color(.tileSelectedLavender), Color(.tileSelectedSky)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing)
+                        : LinearGradient(
+                            colors: [Color(.glassHighlight), Color(.glassMid), Color(.glassLow)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing))
+
+                // 上面のグロス
+                Ellipse()
+                    .fill(Color.white.opacity(0.85))
+                    .frame(width: 22, height: 10)
+                    .blur(radius: 2)
+                    .offset(x: -8, y: -14)
+
+                icon(isSelected)
+            }
+            .frame(height: 50)
+            .frame(maxWidth: .infinity)
+            .overlay(
+                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                    .stroke(Color.white.opacity(isSelected ? 0.95 : 0.7), lineWidth: isSelected ? 2 : 1)
+            )
+            .shadow(
+                color: isSelected ? Pearl.glowPink.opacity(0.7) : Pearl.shadow.opacity(0.35),
+                radius: isSelected ? 8 : 5,
+                y: isSelected ? 2 : 3
+            )
+            .offset(y: isSelected ? -3 : 0)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Color Bubbles (シャボン玉)
+
+    private var colorDots: some View {
+        HStack(spacing: 12) {
+            ForEach(CoverPresets.gradients) { gradient in
+                colorDot(gradient)
+            }
+        }
+    }
+
+    private func colorDot(_ gradient: CoverGradient) -> some View {
         let isSelected = viewModel.selectedGradientID == gradient.id
         return Button {
-            viewModel.selectGradient(id: gradient.id, areaSize: lastPhotoAreaSize)
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
+                viewModel.selectGradient(id: gradient.id, areaSize: lastPhotoAreaSize)
+            }
         } label: {
-            ZStack(alignment: .bottom) {
-                gradient.swiftUIGradient
-                Text(gradient.label)
-                    .font(.system(size: 7, weight: .regular, design: .monospaced))
-                    .tracking(0.5)
-                    .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.6), radius: 0, x: 0, y: 1)
-                    .padding(.bottom, 1)
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 26)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(
-                        isSelected ? Color.white : Color.clear,
-                        lineWidth: 2
-                    )
-            )
-            .shadow(color: isSelected ? Color.white.opacity(0.3) : .clear, radius: 4)
+            Circle()
+                .fill(gradient.swiftUIGradient)
+                .overlay(
+                    // シャボン玉の照り返し
+                    Circle().fill(RadialGradient(
+                        colors: [Color.white.opacity(0.95), Color.white.opacity(0)],
+                        center: UnitPoint(x: 0.32, y: 0.24),
+                        startRadius: 0,
+                        endRadius: 15
+                    ))
+                )
+                .overlay(
+                    Circle().stroke(Color.white.opacity(isSelected ? 1.0 : 0.7), lineWidth: isSelected ? 2.5 : 1)
+                )
+                .frame(width: 34, height: 34)
+                .shadow(
+                    color: isSelected ? Pearl.glowPink.opacity(0.7) : Pearl.shadow.opacity(0.4),
+                    radius: isSelected ? 8 : 4,
+                    y: isSelected ? 1 : 3
+                )
+                .scaleEffect(isSelected ? 1.1 : 1.0)
+                .offset(y: isSelected ? -4 : 0)
         }
+        .buttonStyle(.plain)
     }
 
-    private func sliderRow<Content: View>(label: String, labelColor: Color, leftHint: String, rightHint: String, @ViewBuilder content: () -> Content) -> some View {
-        HStack(spacing: 6) {
-            sectionLabel(label, color: labelColor)
-            HStack(spacing: 6) {
-                Text(leftHint)
-                    .font(.system(size: 8))
-                    .foregroundStyle(Color(white: 0.4))
-                content()
-                Text(rightHint)
-                    .font(.system(size: 8))
-                    .foregroundStyle(Color(white: 0.4))
-            }
-        }
-    }
+    // MARK: - Sliders
 
-    private func sectionLabel(_ text: String, color: Color) -> some View {
-        Text(text)
-            .font(.system(size: 9, weight: .bold, design: .monospaced))
-            .tracking(1.0)
-            .foregroundStyle(color)
-            .shadow(color: color.opacity(0.27), radius: 3)
-            .frame(width: 44, alignment: .leading)
+    private func pearlSlider(
+        _ label: String,
+        value: Binding<Double>,
+        in range: ClosedRange<Double>,
+        step: Double
+    ) -> some View {
+        HStack(spacing: 12) {
+            Text(label)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundStyle(Pearl.inkSoft)
+                .frame(width: 40, alignment: .leading)
+            Slider(value: value, in: range, step: step)
+                .tint(Color(.sliderTrackTint))
+        }
     }
 }
 
@@ -384,75 +356,48 @@ private struct ReviewHeader: View {
     let onDone: () -> Void
 
     var body: some View {
-        HStack {
-            Button(action: onRetake) {
-                Text("← RETAKE")
-                    .font(.system(size: 11, weight: .regular, design: .monospaced))
-                    .tracking(1.0)
-                    .foregroundStyle(Color.cyan)
-                    .shadow(color: .cyan.opacity(0.4), radius: 3)
-            }
+        ZStack {
+            Wordmark()
 
-            Spacer()
-
-            Text("★ fig.cam ★")
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                .tracking(1.5)
-                .foregroundStyle(Color.pink)
-                .shadow(color: .pink.opacity(0.4), radius: 3)
-
-            Spacer()
-
-            Button(action: onDone) {
-                Group {
-                    if isSaving {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .tint(.white)
-                            .scaleEffect(0.7)
-                    } else {
-                        Text("DONE ✓")
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .tracking(1.0)
-                    }
+            HStack {
+                Button(action: onRetake) {
+                    Text("← 撮り直す")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundStyle(Pearl.inkSoft)
                 }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 5)
-                .frame(minHeight: 24)
-                .background(
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.pink, Color(red: 0.541, green: 0.361, blue: 0.965)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .shadow(color: .pink.opacity(0.27), radius: 6)
-                )
+
+                Spacer()
+
+                Button(action: onDone) {
+                    Group {
+                        if isSaving {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .tint(Pearl.inkDeep)
+                                .scaleEffect(0.7)
+                        } else {
+                            Text("完了")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .tracking(0.5)
+                        }
+                    }
+                    .foregroundStyle(Pearl.inkDeep)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
+                    .frame(minHeight: 32)
+                    .background(
+                        Capsule()
+                            .fill(Pearl.iris)
+                            .shadow(color: Color(.irisButtonGlow).opacity(0.9), radius: 8, y: 4)
+                    )
+                    .overlay(Capsule().stroke(Color.white.opacity(0.7), lineWidth: 1))
+                }
+                .disabled(isSaving)
             }
-            .disabled(isSaving)
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 10)
-        .frame(height: 40)
+        .padding(.horizontal, 16)
+        .frame(height: 52)
         .frame(maxWidth: .infinity)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color(red: 0.047, green: 0.047, blue: 0.094),
-                    Color(red: 0.055, green: 0.055, blue: 0.102)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Color(red: 0.541, green: 0.169, blue: 0.886).opacity(0.25))
-                .frame(height: 1)
-        }
     }
 }
 
