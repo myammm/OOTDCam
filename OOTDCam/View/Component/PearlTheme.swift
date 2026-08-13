@@ -110,6 +110,45 @@ extension View {
     func pearlPlate() -> some View { modifier(PearlPlateModifier()) }
 }
 
+/// 押している間だけ縮めて触った感触を出す。標準スタイルは押下時に半透明になり
+/// 質感が消えるので、質感のあるボタンには必ずこちらを使う
+struct PressScaleButtonStyle: ButtonStyle {
+    var scale: CGFloat = 0.96
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1)
+            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
+/// 虹色カプセル (完了ボタンなど)。
+/// 内側下の白い光で厚みを、紫寄りの外影で浮きを出す。黒い影は安っぽくなるので使わない
+struct IrisCapsuleModifier: ViewModifier {
+    var fontSize: CGFloat = 13
+    var verticalPadding: CGFloat = 9
+    var horizontalPadding: CGFloat = 20
+
+    func body(content: Content) -> some View {
+        content
+            .font(.system(size: fontSize, weight: .bold, design: .rounded))
+            .foregroundStyle(Pearl.inkDeep)
+            .padding(.vertical, verticalPadding)
+            .padding(.horizontal, horizontalPadding)
+            .background {
+                Capsule()
+                    .fill(Pearl.iris.shadow(.inner(color: .white.opacity(0.7), radius: 3, y: -2)))
+                    .shadow(color: Color(.irisButtonGlow).opacity(0.9), radius: 8, y: 7)
+            }
+    }
+}
+
+extension View {
+    func irisCapsule(fontSize: CGFloat = 13, verticalPadding: CGFloat = 9, horizontalPadding: CGFloat = 20) -> some View {
+        modifier(IrisCapsuleModifier(fontSize: fontSize, verticalPadding: verticalPadding, horizontalPadding: horizontalPadding))
+    }
+}
+
 /// ガラス球ボタン (編集画面の +/−/✕ など)
 struct PearlCircleButtonStyle: ButtonStyle {
     var size: CGFloat = 38

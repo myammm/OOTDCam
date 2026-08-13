@@ -25,18 +25,10 @@ struct DoneView: View {
 
                 Button(action: onShootAgain) {
                     Text("もう一度撮る")
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
                         .tracking(0.5)
-                        .foregroundStyle(Pearl.inkDeep)
-                        .padding(.horizontal, 36)
-                        .padding(.vertical, 13)
-                        .background(
-                            Capsule()
-                                .fill(Pearl.iris)
-                                .shadow(color: Color(.irisButtonGlow).opacity(0.8), radius: 12, y: 5)
-                        )
-                        .overlay(Capsule().stroke(Color.white.opacity(0.7), lineWidth: 1))
+                        .irisCapsule(fontSize: 14, verticalPadding: 13, horizontalPadding: 36)
                 }
+                .buttonStyle(PressScaleButtonStyle())
                 .padding(.top, 20)
             }
             .opacity(appeared ? 1 : 0)

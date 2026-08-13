@@ -55,48 +55,37 @@ struct CoverGradient: Identifiable, Equatable {
 }
 
 enum CoverPresets {
+    /// 各色 [中間 (Light) → 適用値 (Base) → 外周 (Deep)] のパステル族。
+    /// カラードットの泡色 (白 + Light + Deep) とシェイプの塗りが同じ定義を共有する
     static let gradients: [CoverGradient] = [
         .init(id: "pink", label: "PINK", colors: [
-            Color(hex: "#FF69B4"),
-            Color(hex: "#FF1493"),
-            Color(hex: "#C71585")
+            Color(.coverPinkLight),
+            Color(.coverPinkBase),
+            Color(.coverPinkDeep)
         ]),
         .init(id: "lavender", label: "LAVENDER", colors: [
-            Color(hex: "#E0BBE4"),
-            Color(hex: "#957DAD"),
-            Color(hex: "#D291BC")
+            Color(.coverLavenderLight),
+            Color(.coverLavenderBase),
+            Color(.coverLavenderDeep)
         ]),
         .init(id: "sunset", label: "SUNSET", colors: [
-            Color(hex: "#FF9A9E"),
-            Color(hex: "#FAD0C4"),
-            Color(hex: "#FBC2EB")
+            Color(.coverSunsetLight),
+            Color(.coverSunsetBase),
+            Color(.coverSunsetDeep)
         ]),
         .init(id: "cyber", label: "CYBER", colors: [
-            Color(hex: "#00FFFF"),
-            Color(hex: "#8B5CF6"),
-            Color(hex: "#FF69B4")
+            Color(.coverCyberLight),
+            Color(.coverCyberBase),
+            Color(.coverCyberDeep)
         ]),
         .init(id: "mint", label: "MINT", colors: [
-            Color(hex: "#A8E6CF"),
-            Color(hex: "#88D8B0"),
-            Color(hex: "#B8E6D0")
+            Color(.coverMintLight),
+            Color(.coverMintBase),
+            Color(.coverMintDeep)
         ]),
     ]
 
     static func gradient(id: String) -> CoverGradient {
         gradients.first { $0.id == id } ?? gradients[0]
-    }
-}
-
-extension Color {
-    init(hex: String) {
-        var hex = hex
-        if hex.hasPrefix("#") { hex.removeFirst() }
-        var rgb: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&rgb)
-        let r = Double((rgb >> 16) & 0xff) / 255
-        let g = Double((rgb >> 8) & 0xff) / 255
-        let b = Double(rgb & 0xff) / 255
-        self.init(red: r, green: g, blue: b)
     }
 }

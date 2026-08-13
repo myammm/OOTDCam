@@ -240,12 +240,14 @@ struct ReviewView: View {
 
     private func shapeIcon(_ shapeID: CoverShapeID, selected: Bool) -> some View {
         let nominal = shapeID.nominalSize
-        let width: CGFloat = 24
+        let width: CGFloat = 22
         return CoverShape(id: shapeID)
             .fill(iconColor(selected: selected))
             .frame(width: width, height: width * nominal.height / nominal.width)
     }
 
+    /// グミ質感タイル。光源は全要素と同じ左上固定。
+    /// 面のグラデ + 内側の影(上) + 内側の光(下) + 紫寄りの外影の4層で立体にする
     private func gummyTile(
         isSelected: Bool,
         action: @escaping () -> Void,
@@ -253,81 +255,111 @@ struct ReviewView: View {
     ) -> some View {
         Button(action: action) {
             ZStack {
-                RoundedRectangle(cornerRadius: 17, style: .continuous)
-                    .fill(isSelected
-                        ? LinearGradient(
-                            colors: [Color(.tileSelectedPink), Color(.tileSelectedLavender), Color(.tileSelectedSky)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing)
-                        : LinearGradient(
-                            colors: [Color(.glassHighlight), Color(.glassMid), Color(.glassLow)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing))
-
-                // 上面のグロス
-                Ellipse()
-                    .fill(Color.white.opacity(0.85))
-                    .frame(width: 22, height: 10)
-                    .blur(radius: 2)
-                    .offset(x: -8, y: -14)
-
                 icon(isSelected)
             }
-            .frame(height: 50)
             .frame(maxWidth: .infinity)
-            .overlay(
+            .frame(height: 50)
+            .background {
                 RoundedRectangle(cornerRadius: 17, style: .continuous)
-                    .stroke(Color.white.opacity(isSelected ? 0.95 : 0.7), lineWidth: isSelected ? 2 : 1)
-            )
-            .shadow(
-                color: isSelected ? Pearl.glowPink.opacity(0.7) : Pearl.shadow.opacity(0.35),
-                radius: isSelected ? 8 : 5,
-                y: isSelected ? 2 : 3
-            )
+                    .fill(
+                        LinearGradient(
+                            stops: isSelected
+                                ? [.init(color: Color(.tileSelectedPink), location: 0),
+                                   .init(color: Color(.tileSelectedLavender), location: 0.5),
+                                   .init(color: Color(.tileSelectedSky), location: 1)]
+                                : [.init(color: Color(.glassHighlight), location: 0),
+                                   .init(color: Color(.glassMid), location: 0.55),
+                                   .init(color: Color(.glassLow), location: 1)],
+                            startPoint: .top, endPoint: .bottom
+                        )
+                        .shadow(.inner(color: Color(.glassInnerShadow).opacity(0.35), radius: 4, y: 3))
+                        .shadow(.inner(color: .white.opacity(0.95), radius: 4, y: -3))
+                    )
+                    // 艶 (左上の白いぼかし楕円)。非選択面はほぼ白でハイライトが
+                    // 効かず影だけ目立つため、色が乗る選択中のみ出す
+                    .overlay(alignment: .topLeading) {
+                        Ellipse()
+                            .fill(Color.white.opacity(0.85))
+                            .frame(width: 24, height: 10)
+                            .blur(radius: 2)
+                            .offset(x: 12, y: 5)
+                            .opacity(isSelected ? 1 : 0)
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 17, style: .continuous)
+                            .stroke(.white, lineWidth: isSelected ? 2 : 0)
+                    }
+                    .shadow(
+                        color: isSelected ? Pearl.glowPink.opacity(0.7) : Pearl.shadow.opacity(0.35),
+                        radius: isSelected ? 8 : 4,
+                        y: isSelected ? 6 : 3
+                    )
+            }
             .offset(y: isSelected ? -3 : 0)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScaleButtonStyle())
+        .animation(.spring(response: 0.28, dampingFraction: 0.62), value: isSelected)
     }
 
     // MARK: - Color Bubbles (シャボン玉)
 
     private var colorDots: some View {
-        HStack(spacing: 12) {
+        // 当たり判定フレームが44ptなので、見た目の間隔12pt = spacing 2pt
+        HStack(spacing: 2) {
             ForEach(CoverPresets.gradients) { gradient in
                 colorDot(gradient)
             }
         }
     }
 
+    /// シャボン玉のカラードット。中心を左上にずらした放射グラデーションで球に見せ、
+    /// 上下から内側に白を入れて丸みを出す
     private func colorDot(_ gradient: CoverGradient) -> some View {
         let isSelected = viewModel.selectedGradientID == gradient.id
         return Button {
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
-                viewModel.selectGradient(id: gradient.id, areaSize: lastPhotoAreaSize)
-            }
+            viewModel.selectGradient(id: gradient.id, areaSize: lastPhotoAreaSize)
         } label: {
             Circle()
-                .fill(gradient.swiftUIGradient)
-                .overlay(
-                    // シャボン玉の照り返し
-                    Circle().fill(RadialGradient(
-                        colors: [Color.white.opacity(0.95), Color.white.opacity(0)],
-                        center: UnitPoint(x: 0.32, y: 0.24),
+                .fill(
+                    RadialGradient(
+                        stops: [
+                            .init(color: .white, location: 0),
+                            .init(color: gradient.colors[0], location: 0.40),
+                            .init(color: gradient.colors[2], location: 1)
+                        ],
+                        center: UnitPoint(x: 0.34, y: 0.26),
                         startRadius: 0,
-                        endRadius: 15
-                    ))
-                )
-                .overlay(
-                    Circle().stroke(Color.white.opacity(isSelected ? 1.0 : 0.7), lineWidth: isSelected ? 2.5 : 1)
+                        endRadius: 34
+                    )
+                    .shadow(.inner(color: .white.opacity(0.85), radius: 3, y: -3))
+                    .shadow(.inner(color: .white.opacity(0.45), radius: 3, y: 3))
                 )
                 .frame(width: 34, height: 34)
+                // 艶 (左上の白いぼかし楕円)。タイルと同様、選択中のみ出す
+                .overlay(alignment: .topLeading) {
+                    Ellipse()
+                        .fill(Color.white.opacity(0.9))
+                        .frame(width: 12, height: 8)
+                        .blur(radius: 1.4)
+                        .offset(x: 7, y: 5)
+                        .opacity(isSelected ? 1 : 0)
+                }
+                .overlay {
+                    Circle().stroke(.white.opacity(isSelected ? 1 : 0.7), lineWidth: isSelected ? 2.5 : 1)
+                }
                 .shadow(
                     color: isSelected ? Pearl.glowPink.opacity(0.7) : Pearl.shadow.opacity(0.4),
                     radius: isSelected ? 8 : 4,
-                    y: isSelected ? 1 : 3
+                    y: isSelected ? 0 : 3
                 )
-                .scaleEffect(isSelected ? 1.1 : 1.0)
+                .scaleEffect(isSelected ? 1.1 : 1)
                 .offset(y: isSelected ? -4 : 0)
+                // 見た目34ptでも当たり判定は44ptを確保
+                .frame(width: 44, height: 44)
+                .contentShape(Circle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScaleButtonStyle())
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
     }
 
     // MARK: - Sliders
@@ -376,21 +408,13 @@ private struct ReviewHeader: View {
                                 .scaleEffect(0.7)
                         } else {
                             Text("完了")
-                                .font(.system(size: 13, weight: .bold, design: .rounded))
                                 .tracking(0.5)
                         }
                     }
-                    .foregroundStyle(Pearl.inkDeep)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 8)
-                    .frame(minHeight: 32)
-                    .background(
-                        Capsule()
-                            .fill(Pearl.iris)
-                            .shadow(color: Color(.irisButtonGlow).opacity(0.9), radius: 8, y: 4)
-                    )
-                    .overlay(Capsule().stroke(Color.white.opacity(0.7), lineWidth: 1))
+                    .frame(minHeight: 16)
+                    .irisCapsule()
                 }
+                .buttonStyle(PressScaleButtonStyle())
                 .disabled(isSaving)
             }
         }
