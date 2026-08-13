@@ -338,13 +338,12 @@ struct ReviewView: View {
         in range: ClosedRange<Double>,
         step: Double
     ) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Text(label)
-                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .font(.system(size: 11.5, weight: .medium, design: .rounded))
                 .foregroundStyle(Pearl.inkSoft)
-                .frame(width: 40, alignment: .leading)
-            Slider(value: value, in: range, step: step)
-                .tint(Color(.sliderTrackTint))
+                .frame(width: 34, alignment: .leading)
+            GlassSlider(value: value, range: range, step: step)
         }
     }
 }

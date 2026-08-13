@@ -102,6 +102,11 @@ struct CameraView: View {
                     .frame(width: 120, height: 120)
                     .transition(.opacity)
             }
+
+            // 撮影フラッシュの膜 (最前面)
+            Pearl.flash
+                .opacity(viewModel.showFlash ? 1 : 0)
+                .allowsHitTesting(false)
         }
         .aspectRatio(3.0 / 4.0, contentMode: .fit)
         .pearlPlate()
@@ -140,15 +145,10 @@ struct ShutterButton: View {
 
     var body: some View {
         ZStack {
-            // 虹色リム
+            // 虹色リング (iris トークン参照)。ロゴ・完了ボタンと同色になるため、
+            // 主役性はサイズと外側のピンクの発光で保つ
             Circle()
-                .stroke(
-                    AngularGradient(
-                        colors: Pearl.irisColors + [Pearl.irisColors[0]],
-                        center: .center
-                    ),
-                    lineWidth: 3
-                )
+                .stroke(Pearl.iris, lineWidth: 3)
                 .frame(width: 88, height: 88)
                 .opacity(0.9)
                 .shadow(color: Pearl.glowPink.opacity(0.7), radius: isAnimating ? 14 : 8)

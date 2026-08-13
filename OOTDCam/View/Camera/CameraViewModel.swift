@@ -12,6 +12,7 @@ import Photos
 final class CameraViewModel: ObservableObject {
     @Published var isShutterAnimating: Bool = false
     @Published var showSparkles: Bool = false
+    @Published var showFlash: Bool = false
     @Published var lastCapturedPhoto: CapturedPhoto?
     
     let service = CameraService()
@@ -139,6 +140,16 @@ final class CameraViewModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             withAnimation {
                 self.showSparkles = false
+            }
+        }
+
+        // フラッシュの膜 (素早く出て、ゆっくり消える)
+        withAnimation(.easeOut(duration: 0.09)) {
+            showFlash = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeOut(duration: 0.4)) {
+                self.showFlash = false
             }
         }
     }

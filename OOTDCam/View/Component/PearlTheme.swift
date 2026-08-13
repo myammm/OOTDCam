@@ -22,15 +22,27 @@ enum Pearl {
     /// ガイド線の暗い縁取り。白単色だと明るい背景で消えるので必ず重ねる
     static let guideEdge = Color(.pearlGuideEdge)
 
-    /// 虹色グラデーション。ロゴ・完了ボタン・シャッターリムに限定して使う
+    /// 虹色グラデーション (アプリアイコンのリングと同じ3色・均等配置)。
+    /// 適用箇所はロゴ・完了ボタン・シャッターリング・撮影フラッシュの4つに限定し、
+    /// 個別にグラデーションを書かず必ずこの定義を参照する
     static let irisColors: [Color] = [
-        Color(.irisPink), Color(.irisLavender), Color(.irisSky),
-        Color(.irisMint), Color(.irisCream)
+        Color(.irisPink), Color(.irisLavender), Color(.irisSky)
     ]
     static let iris = LinearGradient(
         colors: irisColors,
         startPoint: UnitPoint(x: 0, y: 0.35),
         endPoint: UnitPoint(x: 1, y: 0.65)
+    )
+
+    /// 撮影フラッシュの膜 (iris と同じ3色に透過を乗せたもの・115deg)
+    static let flash = LinearGradient(
+        stops: [
+            .init(color: Color(.irisPink).opacity(0.95), location: 0),
+            .init(color: Color(.irisLavender).opacity(0.90), location: 0.5),
+            .init(color: Color(.irisSky).opacity(0.95), location: 1)
+        ],
+        startPoint: UnitPoint(x: 0, y: 0.3),
+        endPoint: UnitPoint(x: 1, y: 0.7)
     )
 }
 
