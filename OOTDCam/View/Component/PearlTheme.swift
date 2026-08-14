@@ -23,7 +23,8 @@ enum Pearl {
     static let guideEdge = Color(.pearlGuideEdge)
 
     /// 虹色グラデーション (アプリアイコンのリングと同じ3色・均等配置)。
-    /// 適用箇所はロゴ・完了ボタン・シャッターリング・撮影フラッシュの4つに限定し、
+    /// 適用箇所はロゴ・完了ボタン・シャッターリング・撮影フラッシュ・
+    /// 保存完了画面の共有ボタンとトーストのチェック丸に限定し、
     /// 個別にグラデーションを書かず必ずこの定義を参照する
     static let irisColors: [Color] = [
         Color(.irisPink), Color(.irisLavender), Color(.irisSky)
@@ -37,7 +38,8 @@ enum Pearl {
     /// 上部の帯の高さ。撮影・編集で揃えないとプレートの開始位置が画面間でずれる
     static let topBarHeight: CGFloat = 48
 
-    /// 撮影フラッシュの膜 (iris と同じ3色に透過を乗せたもの・115deg)
+    /// 撮影フラッシュの膜 (iris と同じ3色に透過を乗せたもの・115deg)。
+    /// 保存完了画面のスイープ演出もこの色を使う
     static let flash = LinearGradient(
         stops: [
             .init(color: Color(.irisPink).opacity(0.95), location: 0),

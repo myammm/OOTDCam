@@ -21,17 +21,23 @@ struct ContentView: View {
                 CameraView(onPhotoTaken: coordinator.didCapture)
                     .transition(.opacity)
             case .review:
-                if let photo = coordinator.capturedPhoto {
+                if let viewModel = coordinator.reviewViewModel {
                     ReviewView(
-                        photo: photo,
+                        viewModel: viewModel,
                         onRetake: coordinator.retake,
                         onDone: coordinator.didFinishSaving
                     )
                     .transition(.opacity)
                 }
-            case .done:
-                DoneView(onShootAgain: coordinator.shootAgain)
+            case .saved:
+                if let saved = coordinator.savedPhoto {
+                    SavedView(
+                        photo: saved,
+                        onBack: coordinator.backToEdit,
+                        onShoot: coordinator.shootAgain
+                    )
                     .transition(.opacity)
+                }
             }
         }
         .animation(.easeInOut(duration: 0.3), value: coordinator.screen)
