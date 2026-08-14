@@ -6,22 +6,15 @@
 import SwiftUI
 
 struct ReviewView: View {
-    let photo: CapturedPhoto
+    /// 編集状態を保存完了画面との往復で保持するため、所有は AppCoordinator 側
+    @ObservedObject var viewModel: ReviewViewModel
     let onRetake: () -> Void
-    let onDone: () -> Void
+    let onDone: (SavedPhoto) -> Void
 
-    @StateObject private var viewModel: ReviewViewModel
     @State private var dragStartCenter: CGPoint?
 
     /// hasOverlay 切替時のアニメーション
     private static let overlayToggleAnimation: Animation = .spring(response: 0.35, dampingFraction: 0.72)
-
-    init(photo: CapturedPhoto, onRetake: @escaping () -> Void, onDone: @escaping () -> Void) {
-        self.photo = photo
-        self.onRetake = onRetake
-        self.onDone = onDone
-        _viewModel = StateObject(wrappedValue: ReviewViewModel(photo: photo))
-    }
 
     var body: some View {
         ZStack {
@@ -50,8 +43,13 @@ struct ReviewView: View {
                 Spacer(minLength: 16)
             }
         }
+        // 保存失敗は消えるトーストにせず、残るアラート + 再試行の導線で伝える (issue #17)
         .alert("保存に失敗", isPresented: .constant(viewModel.saveErrorMessage != nil)) {
-            Button("OK") { viewModel.saveErrorMessage = nil }
+            Button("再試行") {
+                viewModel.saveErrorMessage = nil
+                handleDone()
+            }
+            Button("閉じる", role: .cancel) { viewModel.saveErrorMessage = nil }
         } message: {
             Text(viewModel.saveErrorMessage ?? "")
         }
@@ -60,9 +58,8 @@ struct ReviewView: View {
     private func handleDone() {
         guard !viewModel.isSaving else { return }
         Task {
-            let success = await viewModel.compositeAndSave(areaSize: lastPhotoAreaSize)
-            if success {
-                onDone()
+            if let saved = await viewModel.compositeAndSave(areaSize: lastPhotoAreaSize) {
+                onDone(saved)
             }
         }
     }
@@ -438,12 +435,12 @@ private struct ReviewHeader: View {
 struct ReviewView_Previews: PreviewProvider {
     static var previews: some View {
         ReviewView(
-            photo: CapturedPhoto(
+            viewModel: ReviewViewModel(photo: CapturedPhoto(
                 original: UIImage(systemName: "person.fill") ?? UIImage(),
                 display: UIImage(systemName: "person.fill") ?? UIImage()
-            ),
+            )),
             onRetake: {},
-            onDone: {}
+            onDone: { _ in }
         )
     }
 }

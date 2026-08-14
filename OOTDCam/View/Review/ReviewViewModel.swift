@@ -40,6 +40,36 @@ final class ReviewViewModel: ObservableObject {
     /// CoreImage 焼き込み用の orientation 正規化済み画像。初回 compose 時にバックグラウンドで生成
     private var cachedNormalizedImage: UIImage?
 
+    /// 保存済み判定用の編集状態スナップショット。
+    /// 保存完了画面から「戻る」→ 編集せずに再度「完了」を押したとき、
+    /// 同じ写真をカメラロールに2枚保存しないために使う
+    private struct EditFingerprint: Equatable {
+        var hasOverlay: Bool
+        var shape: CoverShapeID
+        var gradientID: String
+        var sheer: Double
+        var blur: Double
+        var center: CGPoint
+        var scale: CGFloat
+        var includeDateStamp: Bool
+    }
+
+    private var currentFingerprint: EditFingerprint {
+        EditFingerprint(
+            hasOverlay: hasOverlay,
+            shape: selectedShape,
+            gradientID: selectedGradientID,
+            sheer: sheer,
+            blur: blur,
+            center: overlayCenter,
+            scale: overlayScale,
+            includeDateStamp: includeDateStamp
+        )
+    }
+
+    /// 直近にカメラロールへ保存した編集状態とその結果
+    private var lastSaved: (fingerprint: EditFingerprint, photo: SavedPhoto)?
+
     var selectedGradient: CoverGradient {
         CoverPresets.gradient(id: selectedGradientID)
     }
@@ -119,9 +149,18 @@ final class ReviewViewModel: ObservableObject {
 
     // MARK: - Save
 
-    func compositeAndSave(areaSize: CGSize) async -> Bool {
+    /// 合成してカメラロールへ保存し、保存完了画面用の SavedPhoto を返す。失敗時は nil。
+    /// 前回保存時から編集内容が変わっていなければ、保存をスキップして前回の結果を返す
+    /// (「戻る」→「完了」の繰り返しで同じ写真が重複保存されるのを防ぐ)
+    func compositeAndSave(areaSize: CGSize) async -> SavedPhoto? {
+        if let last = lastSaved, last.fingerprint == currentFingerprint {
+            return last.photo
+        }
+
         isSaving = true
         defer { isSaving = false }
+
+        let fingerprint = currentFingerprint
 
         // orientation 正規化はバックグラウンドで一度だけ
         let normalized = await ensureNormalizedImage()
@@ -140,10 +179,19 @@ final class ReviewViewModel: ObservableObject {
 
         guard let image = imageToSave else {
             saveErrorMessage = "画像の合成に失敗しました"
-            return false
+            return nil
         }
 
-        return await saveToPhotoLibrary(image)
+        guard await saveToPhotoLibrary(image) else { return nil }
+
+        // 表示用の縮小はバックグラウンドで (フル解像度をメインスレッドで描画するとハングする)
+        let display = await Task.detached(priority: .userInitiated) {
+            ImageCompositor.displayImage(from: image)
+        }.value
+
+        let saved = SavedPhoto(full: image, display: display)
+        lastSaved = (fingerprint, saved)
+        return saved
     }
 
     private func ensureNormalizedImage() async -> UIImage {
