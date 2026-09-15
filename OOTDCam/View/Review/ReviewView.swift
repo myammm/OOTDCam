@@ -91,11 +91,11 @@ struct ReviewView: View {
 
                 // 右上のコントロール (+/−/✕)
                 HStack(spacing: 6) {
-                    circleControl(label: "−") {
-                        viewModel.adjustScale(by: -0.15)
+                    circleControl(label: "−", isEnabled: viewModel.canScaleDown) {
+                        viewModel.stepScale(-1)
                     }
-                    circleControl(label: "+") {
-                        viewModel.adjustScale(by: 0.15)
+                    circleControl(label: "+", isEnabled: viewModel.canScaleUp) {
+                        viewModel.stepScale(+1)
                     }
                     circleControl(label: "✕") {
                         withAnimation(Self.overlayToggleAnimation) {
@@ -208,11 +208,12 @@ struct ReviewView: View {
         .frame(width: areaSize.width, height: areaSize.height)
     }
 
-    private func circleControl(label: String, action: @escaping () -> Void) -> some View {
+    private func circleControl(label: String, isEnabled: Bool = true, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
         }
         .buttonStyle(PearlCircleButtonStyle(size: 30))
+        .disabled(!isEnabled)
     }
 
     // MARK: - Control Pad (左ラベル列なし・画面幅いっぱい)

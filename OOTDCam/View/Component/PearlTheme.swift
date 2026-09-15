@@ -159,6 +159,9 @@ struct PearlCircleButtonStyle: ButtonStyle {
     var size: CGFloat = 38
     var foreground: Color = Pearl.ink
 
+    /// .disabled() の状態。無効時は彩度を落として沈ませ「押せない」見た目にする
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: size * 0.44, weight: .semibold, design: .rounded))
@@ -180,7 +183,10 @@ struct PearlCircleButtonStyle: ButtonStyle {
                     .shadow(color: Pearl.shadow.opacity(0.45), radius: 5, y: 3)
             )
             .overlay(Circle().stroke(Color.white.opacity(0.85), lineWidth: 1))
+            .saturation(isEnabled ? 1.0 : 0)
+            .opacity(isEnabled ? 1.0 : 0.45)
             .scaleEffect(configuration.isPressed ? 0.9 : 1.0)
             .animation(.spring(response: 0.18, dampingFraction: 0.6), value: configuration.isPressed)
+            .animation(.easeInOut(duration: 0.15), value: isEnabled)
     }
 }
