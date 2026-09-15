@@ -135,12 +135,22 @@ final class ReviewViewModel: ObservableObject {
         overlayCenter = point
     }
 
-    func adjustScale(by delta: CGFloat) {
-        overlayScale = max(0.4, min(2.0, overlayScale + delta))
+    /// サイズの段階。顔を隠す用途なので大きくはせず、小さい側は細かく刻む
+    private static let scaleLevels: [CGFloat] = [0.2, 0.275, 0.35, 0.5, 0.65]
+
+    /// 現在値に最も近い段階の index (overlayScale は常に段階上の値だが誤差を許容)
+    private var scaleIndex: Int {
+        Self.scaleLevels.enumerated().min { abs($0.element - overlayScale) < abs($1.element - overlayScale) }!.offset
     }
 
-    func setScale(_ scale: CGFloat) {
-        overlayScale = max(0.4, min(2.0, scale))
+    /// ±ボタンの活性判定 (端に到達したら無効)
+    var canScaleUp: Bool { scaleIndex < Self.scaleLevels.count - 1 }
+    var canScaleDown: Bool { scaleIndex > 0 }
+
+    /// direction: +1 で一段大きく、-1 で一段小さく
+    func stepScale(_ direction: Int) {
+        let index = min(max(scaleIndex + direction, 0), Self.scaleLevels.count - 1)
+        overlayScale = Self.scaleLevels[index]
     }
 
     func removeOverlay() {
