@@ -4,7 +4,6 @@
 //
 
 import SwiftUI
-import Photos
 
 @MainActor
 final class ReviewViewModel: ObservableObject {
@@ -37,6 +36,7 @@ final class ReviewViewModel: ObservableObject {
 
     private var hasInitializedPosition = false
     private let compositor = ImageCompositor()
+    private let photoLibrary: PhotoLibrarySaving
     /// CoreImage 焼き込み用の orientation 正規化済み画像。初回 compose 時にバックグラウンドで生成
     private var cachedNormalizedImage: UIImage?
 
@@ -74,9 +74,10 @@ final class ReviewViewModel: ObservableObject {
         CoverPresets.gradient(id: selectedGradientID)
     }
 
-    init(photo: CapturedPhoto) {
+    init(photo: CapturedPhoto, photoLibrary: PhotoLibrarySaving = PhotoLibraryService()) {
         self.originalImage = photo.original
         self.displayImage = photo.display
+        self.photoLibrary = photoLibrary
     }
 
     // MARK: - Layout helpers
@@ -270,9 +271,7 @@ final class ReviewViewModel: ObservableObject {
 
     private func saveToPhotoLibrary(_ image: UIImage) async -> Bool {
         do {
-            try await PHPhotoLibrary.shared().performChanges {
-                PHAssetChangeRequest.creationRequestForAsset(from: image)
-            }
+            try await photoLibrary.save(image)
             return true
         } catch {
             saveErrorMessage = "写真保存に失敗: \(error.localizedDescription)"
