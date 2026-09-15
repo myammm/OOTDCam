@@ -13,6 +13,9 @@ struct ReviewView: View {
 
     @State private var dragStartCenter: CGPoint?
 
+    /// 形の切り替え時に小→大のポップを出すための一時スケール
+    @State private var shapePopScale: CGFloat = 1.0
+
     /// hasOverlay 切替時のアニメーション
     private static let overlayToggleAnimation: Animation = .spring(response: 0.35, dampingFraction: 0.72)
 
@@ -80,11 +83,8 @@ struct ReviewView: View {
                 // ハートなどのオーバーレイ。conditional 削除＋常に存在＋modifier で見せ消し
                 overlayLayer(areaSize: geo.size)
                     .scaleEffect(
-                        viewModel.hasOverlay ? 1.0 : 0.3,
-                        anchor: UnitPoint(
-                            x: geo.size.width > 0 ? viewModel.overlayCenter.x / geo.size.width : 0.5,
-                            y: geo.size.height > 0 ? viewModel.overlayCenter.y / geo.size.height : 0.5
-                        )
+                        viewModel.hasOverlay ? shapePopScale : 0.3,
+                        anchor: overlayAnchor(in: geo.size)
                     )
                     .opacity(viewModel.hasOverlay ? 1.0 : 0.0)
                     .allowsHitTesting(viewModel.hasOverlay)
@@ -130,6 +130,30 @@ struct ReviewView: View {
             }
             .onChange(of: geo.size) { _, newSize in
                 lastPhotoAreaSize = newSize
+            }
+        }
+    }
+
+    /// モチーフ中心を基準にスケールさせるためのアンカー
+    private func overlayAnchor(in areaSize: CGSize) -> UnitPoint {
+        UnitPoint(
+            x: areaSize.width > 0 ? viewModel.overlayCenter.x / areaSize.width : 0.5,
+            y: areaSize.height > 0 ? viewModel.overlayCenter.y / areaSize.height : 0.5
+        )
+    }
+
+    /// 形の切り替え時、なし→表示と同じ小→大のポップを再生する。
+    /// 0.3 は無アニメで即時反映し、次のランループで 1.0 へ弾ませる
+    /// (同一トランザクション内で 2 回代入すると最後の値に合成されてアニメが出ないため)
+    private func triggerShapePop() {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            shapePopScale = 0.3
+        }
+        Task { @MainActor in
+            withAnimation(Self.overlayToggleAnimation) {
+                shapePopScale = 1.0
             }
         }
     }
@@ -231,8 +255,14 @@ struct ReviewView: View {
             ForEach(CoverShapeID.allCases) { shapeID in
                 let isSelected = viewModel.hasOverlay && viewModel.selectedShape == shapeID
                 gummyTile(isSelected: isSelected) {
+                    // 表示中に別の形へ切り替えた場合のみポップさせる。
+                    // なし→表示は hasOverlay 側の scaleEffect が同じ演出を担うので二重にしない
+                    let isShapeSwitch = viewModel.hasOverlay && viewModel.selectedShape != shapeID
                     withAnimation(Self.overlayToggleAnimation) {
                         viewModel.selectShape(shapeID, areaSize: lastPhotoAreaSize)
+                    }
+                    if isShapeSwitch {
+                        triggerShapePop()
                     }
                 } icon: { selected in
                     shapeIcon(shapeID, selected: selected)
