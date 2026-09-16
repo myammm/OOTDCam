@@ -7,7 +7,6 @@
 
 import SwiftUI
 import AVFoundation
-import Photos
 
 final class CameraViewModel: ObservableObject {
     @Published var isShutterAnimating: Bool = false
@@ -16,7 +15,13 @@ final class CameraViewModel: ObservableObject {
     @Published var lastCapturedPhoto: CapturedPhoto?
     
     let service = CameraService()
-    
+    private let photoLibrary: PhotoLibrarySaving
+
+    init(photoLibrary: PhotoLibrarySaving = PhotoLibraryService()) {
+        self.photoLibrary = photoLibrary
+    }
+
+
     // 権限状態
     private var cameraAuthorized = false
     private var photoLibraryAuthorized = false
@@ -54,7 +59,7 @@ final class CameraViewModel: ObservableObject {
             }
             
             // 写真ライブラリ権限
-            photoLibraryAuthorized = await checkPhotoLibraryPermission()
+            photoLibraryAuthorized = await photoLibrary.requestAddPermission()
             guard photoLibraryAuthorized else {
                 // 権限拒否なら即フラグを立てる
                 DispatchQueue.main.async {
@@ -77,24 +82,6 @@ final class CameraViewModel: ObservableObject {
             return await withCheckedContinuation { continuation in
                 AVCaptureDevice.requestAccess(for: .video) { granted in
                     continuation.resume(returning: granted)
-                }
-            }
-        case .denied, .restricted:
-            return false
-        @unknown default:
-            return false
-        }
-    }
-    
-    private func checkPhotoLibraryPermission() async -> Bool {
-        let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-        switch status {
-        case .authorized, .limited:
-            return true
-        case .notDetermined:
-            return await withCheckedContinuation { continuation in
-                PHPhotoLibrary.requestAuthorization(for: .addOnly) { newStatus in
-                    continuation.resume(returning: newStatus == .authorized || newStatus == .limited)
                 }
             }
         case .denied, .restricted:
