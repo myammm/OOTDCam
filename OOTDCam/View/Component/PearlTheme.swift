@@ -65,6 +65,7 @@ struct PearlBackground: View {
             startPoint: UnitPoint(x: 0.35, y: 0),
             endPoint: UnitPoint(x: 0.65, y: 1)
         )
+        .overlay(AuroraBlobs())
         .overlay(
             RadialGradient(
                 colors: [Color.white.opacity(0.85), Color.white.opacity(0)],
@@ -74,6 +75,92 @@ struct PearlBackground: View {
             )
         )
         .ignoresSafeArea()
+    }
+}
+
+/// 画面の奥にたゆたう光だまり。すりガラス面 (frostedPanel) が透かす相手で、
+/// これがないと地が単色に近くガラスに見えない。
+/// 写真の主役性を守るため、縁に寄せて淡く保つ (色は iris トークンを共有)
+private struct AuroraBlobs: View {
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            ZStack {
+                Circle()
+                    .fill(Color(.irisPink))
+                    .frame(width: w * 0.9, height: w * 0.9)
+                    .position(x: w * 0.94, y: h * 0.16)
+                Circle()
+                    .fill(Color(.irisSky))
+                    .frame(width: w * 0.75, height: w * 0.75)
+                    .position(x: w * 0.02, y: h * 0.48)
+                Circle()
+                    .fill(Color(.irisLavender))
+                    .frame(width: w * 0.95, height: w * 0.95)
+                    .position(x: w * 0.72, y: h * 0.98)
+            }
+            .blur(radius: 70)
+            .opacity(0.45)
+            // 静止した装飾なので1枚のレイヤーに焼いて毎フレームのブラー計算を避ける
+            .drawingGroup()
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+/// すりガラス面 (撮影画面のキャプションピルなど)。
+/// パール地の光だまりが透けて初めてガラスに見えるので、パール地の上でのみ使う。
+/// Material は使わない: システムのマテリアルはグレーのベース色を持ち (ダークモードでは暗転もする)、
+/// パステル地の上で濁って浮く。背後の光だまりは既にぼけているので、白の透過膜だけで
+/// すりガラスに見え、色もそのまま透ける。
+/// 写真の上に置くトースト (SavedToast) は実ブラーが要る別レシピ
+struct FrostedPanelModifier: ViewModifier {
+    var cornerRadius: CGFloat = 24
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        content
+            .background {
+                shape
+                    // 乳白の膜 + 上端の内側ハイライトで「厚みのある板」にする
+                    .fill(
+                        LinearGradient(
+                            stops: [
+                                .init(color: .white.opacity(0.66), location: 0),
+                                .init(color: .white.opacity(0.38), location: 0.55),
+                                .init(color: .white.opacity(0.5), location: 1)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .shadow(.inner(color: .white.opacity(0.9), radius: 6, y: -3))
+                    )
+                    .overlay(
+                        shape.strokeBorder(
+                            LinearGradient(
+                                stops: [
+                                    .init(color: .white.opacity(0.95), location: 0),
+                                    .init(color: .white.opacity(0.35), location: 0.5),
+                                    .init(color: .white.opacity(0.8), location: 1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.2
+                        )
+                    )
+                    .shadow(color: Pearl.shadow.opacity(0.35), radius: 16, y: 10)
+            }
+    }
+}
+
+extension View {
+    /// 浮いたガラスカード (撮影画面のキャプションピルなど)。
+    /// 編集画面のコントロール群には使わない: 縦予算を食って 3:4 プレートが痩せるため、
+    /// グミ質感の部品はパール地に直接並べる
+    func frostedPanel(cornerRadius: CGFloat = 24) -> some View {
+        modifier(FrostedPanelModifier(cornerRadius: cornerRadius))
     }
 }
 

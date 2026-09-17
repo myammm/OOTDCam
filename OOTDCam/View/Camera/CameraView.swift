@@ -26,9 +26,13 @@ struct CameraView: View {
 
                 cameraPlate
 
+                // ガラスピルに載せる分、地の文字より一段濃い ink で沈みを防ぐ
                 Text("♡に顔、線に足先")
                     .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(Pearl.inkSoft)
+                    .foregroundStyle(Pearl.ink)
+                    .padding(.vertical, 9)
+                    .padding(.horizontal, 18)
+                    .frostedPanel(cornerRadius: 20)
                     .padding(.top, 14)
 
                 // シャッターは説明文と画面下端の間で上下センター
