@@ -11,6 +11,8 @@ import SwiftUI
 
 struct SavedView: View {
     let photo: SavedPhoto
+    /// 撮影画面で実測した写真幅 (AppCoordinator.basePhotoWidth)。ReviewView と同じ理由で上限にする
+    let basePhotoWidth: CGFloat
     /// 編集画面へ。保存した状態を見てシェイプの位置を直したいとき
     let onBack: () -> Void
     /// 撮影画面へ
@@ -29,7 +31,7 @@ struct SavedView: View {
             PearlBackground()
 
             VStack(spacing: 0) {
-                SavedHeader(onBack: onBack)
+                SavedHeader(contentWidth: photoAreaWidth, onBack: onBack)
                 photoPlate
                 actions
                 adSlot
@@ -72,8 +74,10 @@ struct SavedView: View {
             }
         }
         .aspectRatio(3.0 / 4.0, contentMode: .fit)
+        .frame(maxWidth: basePhotoWidth > 0 ? basePhotoWidth : .infinity)
         .pearlPlate()
-        .padding(.horizontal, 10)
+        .padding(.horizontal, Pearl.plateHorizontalPadding)
+        .padding(.top, Pearl.plateTopGap)
         // 操作ブロックの maxHeight: .infinity と余り空間を折半して写真が縮まないよう、
         // 写真を先にレイアウトさせて撮影・編集画面と同じ幅いっぱいに揃える
         .layoutPriority(1)
@@ -164,7 +168,8 @@ struct SavedView: View {
         // 「続けて撮る」との間隔 20pt。ボタンに隣接させると誤タップが増え、
         // 無効トラフィックとして跳ね返るので詰めないこと
         .padding(.top, 20)
-        .padding(.bottom, 10)
+        // SE (667pt) はこの画面が縦ぴったりで、10pt だと広告が下端からはみ出す
+        .padding(.bottom, 6)
     }
 
     private var adDivider: some View {
@@ -204,6 +209,8 @@ struct SavedView: View {
 // MARK: - Header
 
 private struct SavedHeader: View {
+    /// 実際に表示されている写真の幅。ボタン列の左右端はこれに揃える (ReviewHeader と同じ実測束縛方式)
+    let contentWidth: CGFloat
     let onBack: () -> Void
 
     var body: some View {
@@ -220,7 +227,9 @@ private struct SavedHeader: View {
                 Spacer()
             }
         }
-        .padding(.horizontal, 16)
+        // 実測幅が取れるまでの初回フレームだけ固定 padding で近似する
+        .frame(width: contentWidth > 0 ? contentWidth : nil)
+        .padding(.horizontal, contentWidth > 0 ? 0 : Pearl.barHorizontalPadding)
         // 高さは撮影・編集の帯と揃える。揃えないとプレートの開始位置が
         // クロスフェード中にずれて見える (#18 と同じ理由)
         .frame(height: Pearl.topBarHeight)
@@ -314,6 +323,7 @@ struct SavedView_Previews: PreviewProvider {
                 full: UIImage(systemName: "person.fill") ?? UIImage(),
                 display: UIImage(systemName: "person.fill") ?? UIImage()
             ),
+            basePhotoWidth: 0,
             onBack: {},
             onShoot: {}
         )

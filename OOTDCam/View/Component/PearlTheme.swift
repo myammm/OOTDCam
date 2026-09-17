@@ -35,12 +35,29 @@ enum Pearl {
         endPoint: UnitPoint(x: 1, y: 0.65)
     )
 
-    /// 上部の帯の高さ。撮影・編集で揃えないとプレートの開始位置が画面間でずれる
-    static let topBarHeight: CGFloat = 48
+    /// 上部の帯の高さ。撮影・編集で揃えないとプレートの開始位置が画面間でずれる。
+    /// 40 はボタン (barButtonHeight 34) + 上下3pt。これ以上高くすると
+    /// iPhone 16 級で編集画面のコントロールが縦に収まらずスクロールが発生する
+    static let topBarHeight: CGFloat = 40
 
     /// 帯に載せるボタン類 (完了カプセル・ガラス球・キャプションのピル) の高さの唯一の定義。
     /// 横並びで1ptでもずれると目立つので、個別の padding の積み上げで高さを作らず必ずこれを参照する
     static let barButtonHeight: CGFloat = 34
+
+    /// 帯とプレートの間隔。3画面 (撮影・編集・保存完了) で揃えないと
+    /// クロスフェード中にプレートの開始位置がずれて見える (#18 と同じ理由)
+    static let plateTopGap: CGFloat = 6
+
+    /// プレートの画面端からの左右 padding
+    static let plateHorizontalPadding: CGFloat = 10
+
+    /// プレートのガラス縁の厚み (pearlPlate 内の padding)
+    static let plateFrameWidth: CGFloat = 4
+
+    /// 帯のボタン列の左右 padding。プレートの「ガラス縁の外周」(10pt) ではなく
+    /// 「写真の縁」(10+4pt) に揃える。白いガラス縁は明るい地でほぼ見えないため、
+    /// 目に見える基準線は写真のラインで、外周に合わせるとボタンがはみ出して見える
+    static let barHorizontalPadding: CGFloat = plateHorizontalPadding + plateFrameWidth
 
     /// ガラス面の縁取り (左上が明るく右下へ抜ける)。
     /// frostedPanel とトースト (SavedToast) で共有し、縁の光り方を画面間で揃える
@@ -195,7 +212,7 @@ struct PearlPlateModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .padding(4)
+            .padding(Pearl.plateFrameWidth)
             .background(
                 RoundedRectangle(cornerRadius: 26, style: .continuous)
                     .fill(LinearGradient(

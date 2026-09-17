@@ -8,6 +8,9 @@ import SwiftUI
 struct ReviewView: View {
     /// 編集状態を保存完了画面との往復で保持するため、所有は AppCoordinator 側
     @ObservedObject var viewModel: ReviewViewModel
+    /// 撮影画面で実測した写真幅 (AppCoordinator.basePhotoWidth)。
+    /// 縦が短い端末でもこの幅を上限にして撮影画面と写真の大きさを揃え、遷移時に跳ねないようにする
+    let basePhotoWidth: CGFloat
     let onRetake: () -> Void
     let onDone: (SavedPhoto) -> Void
 
@@ -26,26 +29,46 @@ struct ReviewView: View {
             VStack(spacing: 0) {
                 ReviewHeader(
                     isSaving: viewModel.isSaving,
+                    contentWidth: lastPhotoAreaSize.width,
                     onRetake: onRetake,
                     onDone: handleDone
                 )
 
                 photoArea
                     .aspectRatio(3.0 / 4.0, contentMode: .fit)
+                    .frame(maxWidth: basePhotoWidth > 0 ? basePhotoWidth : .infinity)
                     .pearlPlate()
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, Pearl.plateHorizontalPadding)
+                    .padding(.top, Pearl.plateTopGap)
+                    // 写真は全端末でフル幅を保つ。縦が足りない端末では
+                    // 写真を縮めるのではなく、下の操作ブロック側をスクロールで逃がす
+                    .layoutPriority(1)
 
                 // 操作ブロックはプレートと画面下端の間で上下センター。
                 // ガラスの容器には載せない: 縦予算を食って写真が痩せる上、
-                // グミ質感の部品はパール地に直接並べて成立する (検討の経緯は PR 参照)
-                Spacer(minLength: 18)
-
-                // 左右は実際に表示されている写真の幅に揃える。
-                // 3:4 プレートは高さ制約で縮むことがあり、固定 padding では写真の幅とずれる
-                controlPad
-                    .frame(width: lastPhotoAreaSize.width > 0 ? lastPhotoAreaSize.width : nil)
-
-                Spacer(minLength: 16)
+                // グミ質感の部品はパール地に直接並べて成立する (検討の経緯は PR #24 参照)。
+                // 縦に収まらない端末 (SE 等) ではスクロールに切り替えて全コントロールに届かせる
+                // コントロールはプレート直下に付け、端末の縦の余りは画面下端に集める。
+                // 上12/下10 は「iPhone mini 級まで非スクロールが成立する」値。
+                // これより増やすと標準サイズ端末でもスクロール枠に切り替わってしまう
+                ViewThatFits(in: .vertical) {
+                    VStack(spacing: 0) {
+                        boundControlPad
+                            .padding(.top, 12)
+                        Spacer(minLength: 10)
+                    }
+                    ScrollView(.vertical) {
+                        boundControlPad
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 12)
+                            .padding(.bottom, 10)
+                    }
+                    // 表示時にインジケータを一瞬光らせ、下に続きがあることを伝える
+                    // (見切れたドット列と合わせた二重の合図)
+                    .scrollIndicatorsFlash(onAppear: true)
+                    // 中身が収まっているときはバウンスさせない (境界サイズで無意味に動くのを防ぐ)
+                    .scrollBounceBehavior(.basedOnSize)
+                }
             }
         }
         // 保存失敗は消えるトーストにせず、残るアラート + 再試行の導線で伝える (issue #17)
@@ -216,6 +239,13 @@ struct ReviewView: View {
         }
         .buttonStyle(PearlCircleButtonStyle(size: 30))
         .disabled(!isEnabled)
+    }
+
+    /// 左右は実際に表示されている写真の幅に揃える
+    /// (固定 padding ではなく実測束縛。ヘッダーのボタン列と同じ方式)
+    private var boundControlPad: some View {
+        controlPad
+            .frame(width: lastPhotoAreaSize.width > 0 ? lastPhotoAreaSize.width : nil)
     }
 
     // MARK: - Control Pad (左ラベル列なし・画面幅いっぱい)
@@ -423,6 +453,10 @@ struct ReviewView: View {
 // MARK: - Header
 private struct ReviewHeader: View {
     let isSaving: Bool
+    /// 実際に表示されている写真の幅。ボタン列の左右端はこれに揃える
+    /// (3:4 プレートは高さ制約で縮むことがあり、固定 padding では写真の縁とずれる。
+    /// controlPad と同じ実測束縛方式)
+    let contentWidth: CGFloat
     let onRetake: () -> Void
     let onDone: () -> Void
 
@@ -461,7 +495,9 @@ private struct ReviewHeader: View {
                 .disabled(isSaving)
             }
         }
-        .padding(.horizontal, 16)
+        // 実測幅が取れるまでの初回フレームだけ固定 padding で近似する
+        .frame(width: contentWidth > 0 ? contentWidth : nil)
+        .padding(.horizontal, contentWidth > 0 ? 0 : Pearl.barHorizontalPadding)
         .frame(height: Pearl.topBarHeight)
         .frame(maxWidth: .infinity)
     }
@@ -475,6 +511,7 @@ struct ReviewView_Previews: PreviewProvider {
                 original: UIImage(systemName: "person.fill") ?? UIImage(),
                 display: UIImage(systemName: "person.fill") ?? UIImage()
             )),
+            basePhotoWidth: 0,
             onRetake: {},
             onDone: { _ in }
         )
