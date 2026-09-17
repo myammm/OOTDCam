@@ -431,11 +431,14 @@ private struct ReviewHeader: View {
             Wordmark()
 
             HStack {
+                // 左上はアイコンだけのガラス球。「帯の ← = 1画面戻る」で全画面共通
+                // (SNOW 系の慣習に合わせテキストは置かない。✕ はモチーフ削除と被るので使わない)。
+                // 文言がない分、読み上げラベルは必須
                 Button(action: onRetake) {
-                    Text("← 撮り直す")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundStyle(Pearl.inkSoft)
+                    Text("←")
                 }
+                .buttonStyle(PearlCircleButtonStyle(size: Pearl.barButtonHeight))
+                .accessibilityLabel("撮り直す")
 
                 Spacer()
 

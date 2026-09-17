@@ -38,6 +38,10 @@ enum Pearl {
     /// 上部の帯の高さ。撮影・編集で揃えないとプレートの開始位置が画面間でずれる
     static let topBarHeight: CGFloat = 48
 
+    /// 帯に載せるボタン類 (完了カプセル・ガラス球・キャプションのピル) の高さの唯一の定義。
+    /// 横並びで1ptでもずれると目立つので、個別の padding の積み上げで高さを作らず必ずこれを参照する
+    static let barButtonHeight: CGFloat = 34
+
     /// 撮影フラッシュの膜 (iris と同じ3色に透過を乗せたもの・115deg)。
     /// 保存完了画面のスイープ演出もこの色を使う
     static let flash = LinearGradient(
@@ -156,11 +160,22 @@ struct FrostedPanelModifier: ViewModifier {
 }
 
 extension View {
-    /// 浮いたガラスカード (撮影画面のキャプションピルなど)。
+    /// 浮いたガラスカード (ガラスピルの背景素材)。
     /// 編集画面のコントロール群には使わない: 縦予算を食って 3:4 プレートが痩せるため、
     /// グミ質感の部品はパール地に直接並べる
     func frostedPanel(cornerRadius: CGFloat = 24) -> some View {
         modifier(FrostedPanelModifier(cornerRadius: cornerRadius))
+    }
+
+    /// ガラスピル (撮影画面のキャプション)。高さは barButtonHeight を参照し、
+    /// 画面をまたいでもピル/カプセル/球が同じリズムで見える
+    func glassPill() -> some View {
+        self
+            .font(.system(size: 13, weight: .medium, design: .rounded))
+            .foregroundStyle(Pearl.ink)
+            .padding(.horizontal, 16)
+            .frame(height: Pearl.barButtonHeight)
+            .frostedPanel(cornerRadius: Pearl.barButtonHeight / 2)
     }
 }
 
@@ -218,15 +233,14 @@ struct PressScaleButtonStyle: ButtonStyle {
 /// 内側下の白い光で厚みを、紫寄りの外影で浮きを出す。黒い影は安っぽくなるので使わない
 struct IrisCapsuleModifier: ViewModifier {
     var fontSize: CGFloat = 13
-    var verticalPadding: CGFloat = 9
     var horizontalPadding: CGFloat = 20
 
     func body(content: Content) -> some View {
         content
             .font(.system(size: fontSize, weight: .bold, design: .rounded))
             .foregroundStyle(Pearl.inkDeep)
-            .padding(.vertical, verticalPadding)
             .padding(.horizontal, horizontalPadding)
+            .frame(height: Pearl.barButtonHeight)
             .background {
                 Capsule()
                     .fill(Pearl.iris.shadow(.inner(color: .white.opacity(0.7), radius: 3, y: -2)))
@@ -236,8 +250,8 @@ struct IrisCapsuleModifier: ViewModifier {
 }
 
 extension View {
-    func irisCapsule(fontSize: CGFloat = 13, verticalPadding: CGFloat = 9, horizontalPadding: CGFloat = 20) -> some View {
-        modifier(IrisCapsuleModifier(fontSize: fontSize, verticalPadding: verticalPadding, horizontalPadding: horizontalPadding))
+    func irisCapsule(fontSize: CGFloat = 13, horizontalPadding: CGFloat = 20) -> some View {
+        modifier(IrisCapsuleModifier(fontSize: fontSize, horizontalPadding: horizontalPadding))
     }
 }
 

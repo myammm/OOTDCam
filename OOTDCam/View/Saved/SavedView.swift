@@ -211,11 +211,12 @@ private struct SavedHeader: View {
             Wordmark()
 
             HStack {
+                // 左上はアイコンだけのガラス球。「帯の ← = 1画面戻る」で編集画面と共通の文法
                 Button(action: onBack) {
-                    Text("← 戻る")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundStyle(Pearl.inkSoft)
+                    Text("←")
                 }
+                .buttonStyle(PearlCircleButtonStyle(size: Pearl.barButtonHeight))
+                .accessibilityLabel("編集に戻る")
                 Spacer()
             }
         }
