@@ -24,23 +24,39 @@ struct GlassSlider: View {
             let x = usable * CGFloat(ratio) + thumbSize / 2
 
             ZStack(alignment: .leading) {
-                // トラック (上から内側に影を落として凹んで見せる)
+                // トラック (凹んだ溝)。上の内影 + 下の内光で窪みを出す
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(.sliderTrackLight), Color(.sliderTrackDark)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .shadow(.inner(color: Color(.sliderTrackShadow).opacity(0.45), radius: 1.5, y: 1.5))
+                        .shadow(.inner(color: .white.opacity(0.75), radius: 1, y: -1))
+                    )
+                    .frame(height: trackHeight)
+
+                // 現在値までのキャンディ色の詰め物 (選択タイルと同じ3色を共有)。
+                // グラデはトラック全幅に敷き、マスクで見せる幅だけ変える。
+                // 詰め物の幅でグラデを引き直すと、つまみを動かすたびに色の位置が流れてしまう
                 Capsule()
                     .fill(LinearGradient(
-                        colors: [Color(.sliderTrackLight), Color(.sliderTrackDark)],
+                        colors: [
+                            Color(.tileSelectedPink),
+                            Color(.tileSelectedLavender),
+                            Color(.tileSelectedSky)
+                        ],
                         startPoint: .leading,
                         endPoint: .trailing
                     ))
                     .frame(height: trackHeight)
-                    .overlay(
-                        Capsule()
-                            .stroke(Color(.sliderTrackShadow).opacity(0.25), lineWidth: 1)
-                            .blur(radius: 1)
-                            .offset(y: 1)
-                            .mask(Capsule())
-                    )
+                    .mask(alignment: .leading) {
+                        Capsule().frame(width: max(x, trackHeight))
+                    }
 
-                // ガラス玉のつまみ。フラットな円にすると他のパステルUIに埋もれるので影は必須
+                // ガラス玉のつまみ。フラットな円にすると他のパステルUIに埋もれるので影は必須。
+                // 白リムは他のガラス球 (PearlCircleButtonStyle・シャッター) と共通の意匠
                 Circle()
                     .fill(RadialGradient(
                         stops: [
@@ -53,6 +69,7 @@ struct GlassSlider: View {
                         endRadius: thumbSize
                     ))
                     .frame(width: thumbSize, height: thumbSize)
+                    .overlay(Circle().stroke(Color.white.opacity(0.85), lineWidth: 1))
                     .shadow(color: Color(.sliderThumbShadow).opacity(0.45), radius: 3, y: 2)
                     .position(x: x, y: geo.size.height / 2)
             }

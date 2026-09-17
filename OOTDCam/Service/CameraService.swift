@@ -21,8 +21,14 @@ final class CameraService: NSObject, ObservableObject {
         configureSession()
     }
 
+    /// カメラ入力まで組めたときだけ true。シミュレータなどカメラを取れない環境では
+    /// false のままにして startRunning を呼ばせない (未構成のまま呼ぶと NSGenericException で落ちる)
+    private var isConfigured = false
+
     private func configureSession() {
         session.beginConfiguration()
+        // 入力が取れず途中で抜ける場合も beginConfiguration を必ず閉じる
+        defer { session.commitConfiguration() }
         session.sessionPreset = .photo
 
         guard let device = AVCaptureDevice.default(.builtInWideAngleCamera,
@@ -37,7 +43,7 @@ final class CameraService: NSObject, ObservableObject {
             session.addOutput(photoOutput)
         }
 
-        session.commitConfiguration()
+        isConfigured = true
     }
 
     /// startRunning / stopRunning はどちらも完了までブロックするので、
@@ -46,7 +52,7 @@ final class CameraService: NSObject, ObservableObject {
 
     func startSession() {
         sessionQueue.async {
-            if !self.session.isRunning {
+            if self.isConfigured && !self.session.isRunning {
                 self.session.startRunning()
             }
         }

@@ -35,8 +35,41 @@ enum Pearl {
         endPoint: UnitPoint(x: 1, y: 0.65)
     )
 
-    /// 上部の帯の高さ。撮影・編集で揃えないとプレートの開始位置が画面間でずれる
-    static let topBarHeight: CGFloat = 48
+    /// 上部の帯の高さ。撮影・編集で揃えないとプレートの開始位置が画面間でずれる。
+    /// 40 はボタン (barButtonHeight 34) + 上下3pt。これ以上高くすると
+    /// iPhone 16 級で編集画面のコントロールが縦に収まらずスクロールが発生する
+    static let topBarHeight: CGFloat = 40
+
+    /// 帯に載せるボタン類 (完了カプセル・ガラス球・キャプションのピル) の高さの唯一の定義。
+    /// 横並びで1ptでもずれると目立つので、個別の padding の積み上げで高さを作らず必ずこれを参照する
+    static let barButtonHeight: CGFloat = 34
+
+    /// 帯とプレートの間隔。3画面 (撮影・編集・保存完了) で揃えないと
+    /// クロスフェード中にプレートの開始位置がずれて見える (#18 と同じ理由)
+    static let plateTopGap: CGFloat = 6
+
+    /// プレートの画面端からの左右 padding
+    static let plateHorizontalPadding: CGFloat = 10
+
+    /// プレートのガラス縁の厚み (pearlPlate 内の padding)
+    static let plateFrameWidth: CGFloat = 4
+
+    /// 帯のボタン列の左右 padding。プレートの「ガラス縁の外周」(10pt) ではなく
+    /// 「写真の縁」(10+4pt) に揃える。白いガラス縁は明るい地でほぼ見えないため、
+    /// 目に見える基準線は写真のラインで、外周に合わせるとボタンがはみ出して見える
+    static let barHorizontalPadding: CGFloat = plateHorizontalPadding + plateFrameWidth
+
+    /// ガラス面の縁取り (左上が明るく右下へ抜ける)。
+    /// frostedPanel とトースト (SavedToast) で共有し、縁の光り方を画面間で揃える
+    static let glassEdgeLine = LinearGradient(
+        stops: [
+            .init(color: .white.opacity(0.95), location: 0),
+            .init(color: .white.opacity(0.35), location: 0.5),
+            .init(color: .white.opacity(0.8), location: 1)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
 
     /// 撮影フラッシュの膜 (iris と同じ3色に透過を乗せたもの・115deg)。
     /// 保存完了画面のスイープ演出もこの色を使う
@@ -65,6 +98,7 @@ struct PearlBackground: View {
             startPoint: UnitPoint(x: 0.35, y: 0),
             endPoint: UnitPoint(x: 0.65, y: 1)
         )
+        .overlay(AuroraBlobs())
         .overlay(
             RadialGradient(
                 colors: [Color.white.opacity(0.85), Color.white.opacity(0)],
@@ -74,6 +108,90 @@ struct PearlBackground: View {
             )
         )
         .ignoresSafeArea()
+    }
+}
+
+/// 画面の奥にたゆたう光だまり。すりガラス面 (frostedPanel) が透かす相手で、
+/// これがないと地が単色に近くガラスに見えない。
+/// 写真の主役性を守るため、縁に寄せて淡く保つ (色は iris トークンを共有)
+private struct AuroraBlobs: View {
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            ZStack {
+                Circle()
+                    .fill(Color(.irisPink))
+                    .frame(width: w * 0.9, height: w * 0.9)
+                    .position(x: w * 0.94, y: h * 0.16)
+                Circle()
+                    .fill(Color(.irisSky))
+                    .frame(width: w * 0.75, height: w * 0.75)
+                    .position(x: w * 0.02, y: h * 0.48)
+                Circle()
+                    .fill(Color(.irisLavender))
+                    .frame(width: w * 0.95, height: w * 0.95)
+                    .position(x: w * 0.72, y: h * 0.98)
+            }
+            .blur(radius: 70)
+            .opacity(0.45)
+            // 静止した装飾なので1枚のレイヤーに焼いて毎フレームのブラー計算を避ける
+            .drawingGroup()
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+/// すりガラス面 (撮影画面のキャプションピルなど)。
+/// パール地の光だまりが透けて初めてガラスに見えるので、パール地の上でのみ使う。
+/// Material は使わない: システムのマテリアルはグレーのベース色を持ち (ダークモードでは暗転もする)、
+/// パステル地の上で濁って浮く。背後の光だまりは既にぼけているので、白の透過膜だけで
+/// すりガラスに見え、色もそのまま透ける。
+/// 写真の上に置くトースト (SavedToast) は実ブラーが要る別レシピ
+struct FrostedPanelModifier: ViewModifier {
+    var cornerRadius: CGFloat = 24
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        content
+            .background {
+                shape
+                    // 乳白の膜 + 上端の内側ハイライトで「厚みのある板」にする
+                    .fill(
+                        LinearGradient(
+                            stops: [
+                                .init(color: .white.opacity(0.66), location: 0),
+                                .init(color: .white.opacity(0.38), location: 0.55),
+                                .init(color: .white.opacity(0.5), location: 1)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .shadow(.inner(color: .white.opacity(0.9), radius: 6, y: -3))
+                    )
+                    .overlay(shape.strokeBorder(Pearl.glassEdgeLine, lineWidth: 1.2))
+                    .shadow(color: Pearl.shadow.opacity(0.35), radius: 16, y: 10)
+            }
+    }
+}
+
+extension View {
+    /// 浮いたガラスカード (ガラスピルの背景素材)。
+    /// 編集画面のコントロール群には使わない: 縦予算を食って 3:4 プレートが痩せるため、
+    /// グミ質感の部品はパール地に直接並べる
+    func frostedPanel(cornerRadius: CGFloat = 24) -> some View {
+        modifier(FrostedPanelModifier(cornerRadius: cornerRadius))
+    }
+
+    /// ガラスピル (撮影画面のキャプション)。高さは barButtonHeight を参照し、
+    /// 画面をまたいでもピル/カプセル/球が同じリズムで見える
+    func glassPill() -> some View {
+        self
+            .font(.system(size: 13, weight: .medium, design: .rounded))
+            .foregroundStyle(Pearl.ink)
+            .padding(.horizontal, 16)
+            .frame(height: Pearl.barButtonHeight)
+            .frostedPanel(cornerRadius: Pearl.barButtonHeight / 2)
     }
 }
 
@@ -94,7 +212,7 @@ struct PearlPlateModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .padding(4)
+            .padding(Pearl.plateFrameWidth)
             .background(
                 RoundedRectangle(cornerRadius: 26, style: .continuous)
                     .fill(LinearGradient(
@@ -131,15 +249,14 @@ struct PressScaleButtonStyle: ButtonStyle {
 /// 内側下の白い光で厚みを、紫寄りの外影で浮きを出す。黒い影は安っぽくなるので使わない
 struct IrisCapsuleModifier: ViewModifier {
     var fontSize: CGFloat = 13
-    var verticalPadding: CGFloat = 9
     var horizontalPadding: CGFloat = 20
 
     func body(content: Content) -> some View {
         content
             .font(.system(size: fontSize, weight: .bold, design: .rounded))
             .foregroundStyle(Pearl.inkDeep)
-            .padding(.vertical, verticalPadding)
             .padding(.horizontal, horizontalPadding)
+            .frame(height: Pearl.barButtonHeight)
             .background {
                 Capsule()
                     .fill(Pearl.iris.shadow(.inner(color: .white.opacity(0.7), radius: 3, y: -2)))
@@ -149,8 +266,8 @@ struct IrisCapsuleModifier: ViewModifier {
 }
 
 extension View {
-    func irisCapsule(fontSize: CGFloat = 13, verticalPadding: CGFloat = 9, horizontalPadding: CGFloat = 20) -> some View {
-        modifier(IrisCapsuleModifier(fontSize: fontSize, verticalPadding: verticalPadding, horizontalPadding: horizontalPadding))
+    func irisCapsule(fontSize: CGFloat = 13, horizontalPadding: CGFloat = 20) -> some View {
+        modifier(IrisCapsuleModifier(fontSize: fontSize, horizontalPadding: horizontalPadding))
     }
 }
 

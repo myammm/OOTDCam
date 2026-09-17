@@ -9,6 +9,8 @@ import SwiftUI
 
 struct CameraView: View {
     let onPhotoTaken: (CapturedPhoto) -> Void
+    /// 実測したプレビュー幅の通知先 (AppCoordinator.basePhotoWidth)
+    let onPreviewWidthChanged: (CGFloat) -> Void
     @StateObject private var viewModel = CameraViewModel()
     /// プレビュー領域のサイズ。プレビューはガラス縁の内側にレイアウトするので、
     /// 可視矩形はレイヤーのローカル座標 (origin: .zero) で渡す
@@ -26,9 +28,9 @@ struct CameraView: View {
 
                 cameraPlate
 
+                // ガラスピルに載せる (文字色・寸法は glassPill が持つ)
                 Text("♡に顔、線に足先")
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(Pearl.inkSoft)
+                    .glassPill()
                     .padding(.top, 14)
 
                 // シャッターは説明文と画面下端の間で上下センター
@@ -40,7 +42,8 @@ struct CameraView: View {
 
                 Spacer(minLength: 0)
             }
-            .padding(.bottom, 10)
+            // SE (667pt) はこの画面が縦ぴったりで、10pt だとシャッターが下端からはみ出す
+            .padding(.bottom, 6)
         }
         .alert("カメラ権限がありません", isPresented: $viewModel.cameraPermissionDenied) {
             Button("設定を開く") {
@@ -86,9 +89,13 @@ struct CameraView: View {
 
             GeometryReader { geo in
                 Color.clear
-                    .onAppear { previewSize = geo.size }
+                    .onAppear {
+                        previewSize = geo.size
+                        onPreviewWidthChanged(geo.size.width)
+                    }
                     .onChange(of: geo.size) { _, newSize in
                         previewSize = newSize
+                        onPreviewWidthChanged(newSize.width)
                     }
             }
 
@@ -113,7 +120,10 @@ struct CameraView: View {
         }
         .aspectRatio(3.0 / 4.0, contentMode: .fit)
         .pearlPlate()
-        .padding(.horizontal, 10)
+        .padding(.horizontal, Pearl.plateHorizontalPadding)
+        .padding(.top, Pearl.plateTopGap)
+        // プレビューは全端末でフル幅を保ち、余白側 (Spacer) に縮んでもらう
+        .layoutPriority(1)
     }
 }
 
@@ -216,6 +226,6 @@ struct SparkleOverlay: View {
 // MARK: - Preview
 struct CameraView_Previews: PreviewProvider {
     static var previews: some View {
-        CameraView(onPhotoTaken: { _ in })
+        CameraView(onPhotoTaken: { _ in }, onPreviewWidthChanged: { _ in })
     }
 }
