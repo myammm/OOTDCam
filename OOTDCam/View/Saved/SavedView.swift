@@ -255,7 +255,7 @@ private struct SavedToast: View {
                             .shadow(.inner(color: .white.opacity(0.8), radius: 3, y: -2))
                     )
                 )
-                .overlay(Capsule().stroke(.white.opacity(0.9), lineWidth: 1))
+                .overlay(Capsule().strokeBorder(Pearl.glassEdgeLine, lineWidth: 1.2))
                 .shadow(color: Color(.toastShadow).opacity(0.7), radius: 12, y: 10)
         }
     }

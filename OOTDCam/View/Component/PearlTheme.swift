@@ -42,6 +42,18 @@ enum Pearl {
     /// 横並びで1ptでもずれると目立つので、個別の padding の積み上げで高さを作らず必ずこれを参照する
     static let barButtonHeight: CGFloat = 34
 
+    /// ガラス面の縁取り (左上が明るく右下へ抜ける)。
+    /// frostedPanel とトースト (SavedToast) で共有し、縁の光り方を画面間で揃える
+    static let glassEdgeLine = LinearGradient(
+        stops: [
+            .init(color: .white.opacity(0.95), location: 0),
+            .init(color: .white.opacity(0.35), location: 0.5),
+            .init(color: .white.opacity(0.8), location: 1)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
     /// 撮影フラッシュの膜 (iris と同じ3色に透過を乗せたもの・115deg)。
     /// 保存完了画面のスイープ演出もこの色を使う
     static let flash = LinearGradient(
@@ -140,20 +152,7 @@ struct FrostedPanelModifier: ViewModifier {
                         )
                         .shadow(.inner(color: .white.opacity(0.9), radius: 6, y: -3))
                     )
-                    .overlay(
-                        shape.strokeBorder(
-                            LinearGradient(
-                                stops: [
-                                    .init(color: .white.opacity(0.95), location: 0),
-                                    .init(color: .white.opacity(0.35), location: 0.5),
-                                    .init(color: .white.opacity(0.8), location: 1)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.2
-                        )
-                    )
+                    .overlay(shape.strokeBorder(Pearl.glassEdgeLine, lineWidth: 1.2))
                     .shadow(color: Pearl.shadow.opacity(0.35), radius: 16, y: 10)
             }
     }
