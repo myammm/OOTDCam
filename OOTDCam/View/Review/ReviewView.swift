@@ -330,8 +330,6 @@ struct ReviewView: View {
 
     private func triggerLockedHint() {
         lockedHintDismissTask?.cancel()
-        // トーストは消えるので、視覚に頼れない場合のために読み上げを別途投げる
-        UIAccessibility.post(notification: .announcement, argument: "形を選ぶと色とスライダーが使えます")
 
         if reduceMotion {
             withAnimation(.easeInOut(duration: 0.25)) { showLockedHint = true }
