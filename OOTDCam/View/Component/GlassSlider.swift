@@ -14,6 +14,10 @@ struct GlassSlider: View {
     let range: ClosedRange<Double>
     var step: Double? = nil
 
+    /// 親の .disabled() を尊重するための環境値。標準コントロールと違い、
+    /// 素の DragGesture は .disabled では止まらないため自前でヒットテストを切る
+    @Environment(\.isEnabled) private var isEnabled
+
     private let trackHeight: CGFloat = 6
     private let thumbSize: CGFloat = 20
 
@@ -90,6 +94,7 @@ struct GlassSlider: View {
                         value = newValue
                     }
             )
+            .allowsHitTesting(isEnabled)
         }
         .frame(height: 44)
     }
