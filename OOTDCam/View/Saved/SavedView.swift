@@ -181,9 +181,6 @@ struct SavedView: View {
     // MARK: - 演出の順番
 
     private func runSequence() {
-        // トーストは消えるので、視覚に頼れない場合のために読み上げを別途投げる
-        UIAccessibility.post(notification: .announcement, argument: "カメラロールに保存しました")
-
         if reduceMotion {
             // 浮上と膜の演出は止め、トーストはフェードのみ
             appeared = true
