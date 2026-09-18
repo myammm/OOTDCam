@@ -13,6 +13,11 @@ import SwiftUI
 /// 一本のガイドとして読ませる。
 /// 線はすべて白＋暗い縁取りの二重構造。単色だと背景によって消える。
 struct GuideOverlayView: View {
+    /// 足元線の下端の入り。日付スタンプの下余白 (右12pt/下10pt の下側) と揃える
+    private let footInset: CGFloat = 10
+    /// footMark フレームの高さ。線はフレーム下端に描かれる
+    private let footMarkHeight: CGFloat = 12
+
     private let glowGradient = LinearGradient(
         colors: [Color(.irisPink), Color(.irisLavender), Color(.irisSky)],
         startPoint: .topLeading,
@@ -25,7 +30,7 @@ struct GuideOverlayView: View {
             let height = geometry.size.height
             let centerX = width / 2
             let heartCenterY = height / 2
-            let footY = height * 0.92
+            let footY = height - footInset - footMarkHeight / 2
             let heartWidth: CGFloat = 72
             let heartHeight: CGFloat = 61
 
@@ -69,7 +74,7 @@ struct GuideOverlayView: View {
             FootDashShape()
                 .stroke(Color.white.opacity(0.95), style: StrokeStyle(lineWidth: 2, dash: [5, 6]))
         }
-        .frame(width: 112, height: 12)
+        .frame(width: 112, height: footMarkHeight)
         .shadow(color: Pearl.glowPink.opacity(0.8), radius: 5)
         .shadow(color: Pearl.guideEdge.opacity(0.9), radius: 2, y: 1)
     }
