@@ -109,7 +109,6 @@ struct CameraView: View {
 
             if viewModel.showSparkles {
                 SparkleOverlay()
-                    .frame(width: 120, height: 120)
                     .transition(.opacity)
             }
 
@@ -196,30 +195,6 @@ struct ShutterButton: View {
         .onTapGesture { onTap() }
         .accessibilityLabel("シャッター")
         .accessibilityAddTraits(.isButton)
-    }
-}
-
-// MARK: - Sparkle Effect
-struct SparkleOverlay: View {
-    @State private var rotation: Double = 0
-
-    var body: some View {
-        ZStack {
-            ForEach(0..<6) { i in
-                Circle()
-                    .fill(LinearGradient(colors: [.white, .yellow.opacity(0.6), .clear],
-                                         startPoint: .center, endPoint: .bottom))
-                    .frame(width: 8, height: 20)
-                    .offset(y: -40)
-                    .rotationEffect(.degrees(Double(i) * 60))
-            }
-        }
-        .rotationEffect(.degrees(rotation))
-        .onAppear {
-            withAnimation(.linear(duration: 1.0).repeatForever(autoreverses: false)) {
-                rotation = 360
-            }
-        }
     }
 }
 
