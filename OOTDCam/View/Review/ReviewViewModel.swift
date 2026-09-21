@@ -193,14 +193,23 @@ final class ReviewViewModel: ObservableObject {
             return nil
         }
 
-        guard await saveToPhotoLibrary(image) else { return nil }
-
-        // 表示用の縮小はバックグラウンドで (フル解像度をメインスレッドで描画するとハングする)
-        let display = await Task.detached(priority: .userInitiated) {
-            ImageCompositor.displayImage(from: image)
+        // エンコードは 1 回だけ: 先に JPEG をファイル化し、同じファイルを
+        // カメラロール保存と共有シートの両方に使う。表示用の縮小も同じ裏時間で
+        // (フル解像度をメインスレッドで描画・エンコードするとハングする)
+        let date = capturedDate
+        let (display, fileURL) = await Task.detached(priority: .userInitiated) {
+            (ImageCompositor.displayImage(from: image),
+             ImageCompositor.writeJPEG(image, date: date))
         }.value
 
-        let saved = SavedPhoto(full: image, display: display)
+        if let fileURL {
+            guard await saveToPhotoLibrary(contentsOf: fileURL) else { return nil }
+        } else {
+            // ファイル化に失敗したときだけ iOS 側エンコードで保存自体は成立させる
+            guard await saveToPhotoLibrary(image) else { return nil }
+        }
+
+        let saved = SavedPhoto(display: display, fileURL: fileURL)
         lastSaved = (fingerprint, saved)
         return saved
     }
@@ -272,6 +281,16 @@ final class ReviewViewModel: ObservableObject {
     private func saveToPhotoLibrary(_ image: UIImage) async -> Bool {
         do {
             try await photoLibrary.save(image)
+            return true
+        } catch {
+            saveErrorMessage = "写真保存に失敗: \(error.localizedDescription)"
+            return false
+        }
+    }
+
+    private func saveToPhotoLibrary(contentsOf url: URL) async -> Bool {
+        do {
+            try await photoLibrary.save(contentsOf: url)
             return true
         } catch {
             saveErrorMessage = "写真保存に失敗: \(error.localizedDescription)"

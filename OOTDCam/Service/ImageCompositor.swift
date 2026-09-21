@@ -47,6 +47,25 @@ final class ImageCompositor {
         }
     }
 
+    /// 完成画像の JPEG を一時ディレクトリへ書き出す。このファイル 1 つを
+    /// カメラロール保存と共有シートの両方に使う (エンコードは 1 回・両者はバイト単位で同一)。
+    /// UIImage を共有シートに直接渡すと表示前にメインスレッドでエンコードが走って
+    /// 数秒待たされるため、保存の裏時間にファイル化しておく
+    static func writeJPEG(_ image: UIImage, date: Date) -> URL? {
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd_HHmmss"
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("OOTDCam_\(formatter.string(from: date)).jpg")
+        do {
+            try data.write(to: url, options: .atomic)
+            return url
+        } catch {
+            return nil
+        }
+    }
+
     /// 右下に '''YY.MM.DD 形式の日付スタンプを焼き込む (レトロデジカメ風)
     static func drawDateStamp(on image: UIImage, date: Date) -> UIImage {
         let format = UIGraphicsImageRendererFormat()
