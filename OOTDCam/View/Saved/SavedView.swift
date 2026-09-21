@@ -39,10 +39,20 @@ struct SavedView: View {
         }
         .onAppear(perform: runSequence)
         .sheet(isPresented: $showShareSheet) {
-            ShareSheet(items: [photo.full])
+            ShareSheet(items: [shareItem])
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
+    }
+
+    /// カメラロールに保存したものと同一の JPEG ファイルを渡す (シートが即座に開く)。
+    /// ファイル化に失敗した・tmp が掃除されて消えていたときだけ表示用の 1600px を渡す
+    /// (フル解像度はカメラロールに保存済み。共有だけ縮小版になるが成立はする)
+    private var shareItem: Any {
+        if let url = photo.fileURL, FileManager.default.fileExists(atPath: url.path) {
+            return url
+        }
+        return photo.display
     }
 
     // MARK: - 写真
@@ -317,8 +327,8 @@ struct SavedView_Previews: PreviewProvider {
     static var previews: some View {
         SavedView(
             photo: SavedPhoto(
-                full: UIImage(systemName: "person.fill") ?? UIImage(),
-                display: UIImage(systemName: "person.fill") ?? UIImage()
+                display: UIImage(systemName: "person.fill") ?? UIImage(),
+                fileURL: nil
             ),
             basePhotoWidth: 0,
             onBack: {},
