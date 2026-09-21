@@ -21,7 +21,8 @@ final class ReviewViewModel: ObservableObject {
 
     /// オーバーレイ中心座標 (写真エリア座標系)
     @Published var overlayCenter: CGPoint = .zero
-    @Published var overlayScale: CGFloat = 0.5
+    /// 初期値 0.35 は撮影ガイドのハート (72pt 幅) とほぼ同寸 (200 × 0.35 = 70pt)
+    @Published var overlayScale: CGFloat = 0.35
     /// 起動時はカバーなし。ユーザーがシェイプを選んで初めて表示される
     @Published var hasOverlay: Bool = false
 
