@@ -22,8 +22,7 @@ DerivedData/
 .swiftpm/
 Packages/
 Package.pins
-Package.resolved
-*.xcodeproj/xcshareddata/swiftpm/
+# Package.resolved はコミットする (依存バージョン固定のため、issue #25 の SDK 導入時に解除)
 
 # CocoaPods
 Pods/

@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AD0000000000000000000021 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = AD0000000000000000000011 /* GoogleMobileAds */; };
+		AD0000000000000000000022 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = AD0000000000000000000012 /* RevenueCat */; };
+		AD0000000000000000000023 /* RevenueCatAdMob in Frameworks */ = {isa = PBXBuildFile; productRef = AD0000000000000000000013 /* RevenueCatAdMob */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		6CC12D7D2E82A9B900392473 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -29,9 +35,22 @@
 		6CC12D862E82A9B900392473 /* OOTDCamUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OOTDCamUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AD0000000000000000000031 /* Exceptions for "OOTDCam" folder in "OOTDCam" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 6CC12D6A2E82A9B700392473 /* OOTDCam */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		6CC12D6D2E82A9B700392473 /* OOTDCam */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AD0000000000000000000031 /* Exceptions for "OOTDCam" folder in "OOTDCam" target */,
+			);
 			path = OOTDCam;
 			sourceTree = "<group>";
 		};
@@ -52,6 +71,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AD0000000000000000000021 /* GoogleMobileAds in Frameworks */,
+				AD0000000000000000000022 /* RevenueCat in Frameworks */,
+				AD0000000000000000000023 /* RevenueCatAdMob in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +134,9 @@
 			);
 			name = OOTDCam;
 			packageProductDependencies = (
+				AD0000000000000000000011 /* GoogleMobileAds */,
+				AD0000000000000000000012 /* RevenueCat */,
+				AD0000000000000000000013 /* RevenueCatAdMob */,
 			);
 			productName = OOTDCam;
 			productReference = 6CC12D6B2E82A9B700392473 /* OOTDCam.app */;
@@ -196,6 +221,11 @@
 			);
 			mainGroup = 6CC12D622E82A9B700392473;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AD0000000000000000000001 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+				AD0000000000000000000002 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+				AD0000000000000000000003 /* XCRemoteSwiftPackageReference "purchases-ios-admob" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6CC12D6C2E82A9B700392473 /* Products */;
 			projectDirPath = "";
@@ -397,9 +427,11 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OOTDCam/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = fig.cam;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to take photos.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This app saves photos to your camera roll.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "This identifier will be used to show you ads that are more relevant to you.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -440,9 +472,11 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OOTDCam/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = fig.cam;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to take photos.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This app saves photos to your camera roll.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "This identifier will be used to show you ads that are more relevant to you.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -600,6 +634,51 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AD0000000000000000000001 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 13.10.0;
+			};
+		};
+		AD0000000000000000000002 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.90.2;
+			};
+		};
+		AD0000000000000000000003 /* XCRemoteSwiftPackageReference "purchases-ios-admob" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-admob.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.90.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AD0000000000000000000011 /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AD0000000000000000000001 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
+		};
+		AD0000000000000000000012 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AD0000000000000000000002 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+		AD0000000000000000000013 /* RevenueCatAdMob */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AD0000000000000000000003 /* XCRemoteSwiftPackageReference "purchases-ios-admob" */;
+			productName = RevenueCatAdMob;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 6CC12D632E82A9B700392473 /* Project object */;
 }
