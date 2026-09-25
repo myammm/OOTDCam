@@ -75,6 +75,8 @@ final class ImageCompositor {
         let renderer = UIGraphicsImageRenderer(size: size, format: format)
 
         let formatter = DateFormatter()
+        // 端末言語によらず日付スタンプの数字を欧文数字に固定する
+        formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "''yy.MM.dd"
         let dateString = formatter.string(from: date)
 

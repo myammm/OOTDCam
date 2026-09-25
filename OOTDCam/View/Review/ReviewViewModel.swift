@@ -190,7 +190,7 @@ final class ReviewViewModel: ObservableObject {
         }
 
         guard let image = imageToSave else {
-            saveErrorMessage = "画像の合成に失敗しました"
+            saveErrorMessage = String(localized: "画像の合成に失敗しました")
             return nil
         }
 
@@ -284,7 +284,7 @@ final class ReviewViewModel: ObservableObject {
             try await photoLibrary.save(image)
             return true
         } catch {
-            saveErrorMessage = "写真保存に失敗: \(error.localizedDescription)"
+            saveErrorMessage = String(localized: "写真保存に失敗: \(error.localizedDescription)")
             return false
         }
     }
@@ -294,7 +294,7 @@ final class ReviewViewModel: ObservableObject {
             try await photoLibrary.save(contentsOf: url)
             return true
         } catch {
-            saveErrorMessage = "写真保存に失敗: \(error.localizedDescription)"
+            saveErrorMessage = String(localized: "写真保存に失敗: \(error.localizedDescription)")
             return false
         }
     }
