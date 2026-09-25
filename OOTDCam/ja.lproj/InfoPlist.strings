@@ -1,2 +1,3 @@
 "NSCameraUsageDescription" = "写真を撮影するためにカメラを使用します";
 "NSPhotoLibraryAddUsageDescription" = "撮影した写真をカメラロールに保存するために使用します";
+"NSUserTrackingUsageDescription" = "あなたに関連性の高い広告を表示するために識別子を使用します";
