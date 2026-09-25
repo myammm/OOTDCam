@@ -523,7 +523,7 @@ struct ReviewView: View {
     // MARK: - Sliders
 
     private func pearlSlider(
-        _ label: String,
+        _ label: LocalizedStringKey, // String だとカタログを引かず原文のまま表示される
         value: Binding<Double>,
         in range: ClosedRange<Double>,
         step: Double
@@ -532,6 +532,8 @@ struct ReviewView: View {
             Text(label)
                 .font(.system(size: 11.5, weight: .medium, design: .rounded))
                 .foregroundStyle(Pearl.inkSoft)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8) // 英語ラベルが34pt枠をわずかに超えた場合の保険
                 .frame(width: 34, alignment: .leading)
             GlassSlider(value: value, range: range, step: step)
         }

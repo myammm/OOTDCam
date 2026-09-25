@@ -136,6 +136,8 @@ struct DateStamp: View {
 
     private static let formatter: DateFormatter = {
         let f = DateFormatter()
+        // 端末言語によらず日付スタンプの数字を欧文数字に固定する
+        f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "''yy.MM.dd"
         return f
     }()
