@@ -84,6 +84,16 @@ final class CameraService: NSObject, ObservableObject {
         visibleRectInLayer: CGRect,
         completion: @escaping (CapturedPhoto?) -> Void
     ) {
+        // スクショモード: サンプル写真をそのまま撮影結果として返し、編集画面まで通す
+        if let sample = ScreenshotMode.samplePhoto {
+            DispatchQueue.global(qos: .userInitiated).async {
+                completion(CapturedPhoto(
+                    original: sample,
+                    display: ImageCompositor.displayImage(from: sample)
+                ))
+            }
+            return
+        }
         // canonical な AVFoundation 変換: 各コーナーをセンサー正規化座標 [0,1]^2 に変換
         // (videoOrientation, gravity, scaling すべて内部で正しく扱ってくれる)
         let normalizedRect: CGRect

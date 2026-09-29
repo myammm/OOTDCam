@@ -85,7 +85,15 @@ struct CameraView: View {
             Color(.photoBackdrop)
 
             // 3:4 のプレビュー (センサーも 3:4 なので aspectFill でほぼ全域が映る)
-            CameraPreviewView(service: viewModel.service, gravity: .resizeAspectFill)
+            if let sample = ScreenshotMode.samplePhoto {
+                Image(uiImage: sample)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
+            } else {
+                CameraPreviewView(service: viewModel.service, gravity: .resizeAspectFill)
+            }
 
             GeometryReader { geo in
                 Color.clear
@@ -102,10 +110,13 @@ struct CameraView: View {
             GuideOverlayView()
 
             // 位置は編集画面・保存時の焼き込みと揃える (右12pt / 下10pt)
-            DateStamp()
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .padding(.bottom, 10)
-                .padding(.trailing, 12)
+            // スクショモードのサンプル写真はスタンプ焼き込み済みなのでライブ表示しない
+            if !ScreenshotMode.isActive {
+                DateStamp()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    .padding(.bottom, 10)
+                    .padding(.trailing, 12)
+            }
 
             if viewModel.showSparkles {
                 SparkleOverlay()
