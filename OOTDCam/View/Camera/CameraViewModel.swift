@@ -47,6 +47,8 @@ final class CameraViewModel: ObservableObject {
     
     // MARK: - 権限チェック & セッション開始
     private func requestPermissionsAndStart() {
+        // スクショモードはカメラを使わないので権限確認ごと省略 (ダイアログがスクショに写るのを防ぐ)
+        guard !ScreenshotMode.isActive else { return }
         Task {
             // カメラ権限
             cameraAuthorized = await checkCameraPermission()
@@ -96,7 +98,8 @@ final class CameraViewModel: ObservableObject {
     }
     
     private func takePhoto(visibleRect: CGRect) {
-        guard cameraAuthorized, photoLibraryAuthorized else { return }
+        // スクショモードは権限に依存しない (シミュレータで権限ダイアログを出さない)
+        guard (cameraAuthorized && photoLibraryAuthorized) || ScreenshotMode.isActive else { return }
 
         // シャッター直後にプレビューを固定して「撮れた」を即座に見せる
         service.freezePreview()
