@@ -421,7 +421,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = OOTDCam/OOTDCam.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"OOTDCam/Preview Content\"";
 				DEVELOPMENT_TEAM = 9PF365R5K2;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -429,9 +429,9 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OOTDCam/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = fig.cam;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to take photos.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This app saves photos to your camera roll.";
-				INFOPLIST_KEY_NSUserTrackingUsageDescription = "This identifier will be used to show you ads that are more relevant to you.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "fig.cam uses the camera to take full-body outfit photos. For example, you can frame your whole outfit with the on-screen guide, take a photo, and blur your face in a heart or other shape before saving.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "fig.cam saves your edited outfit photos to your photo library. For example, after hiding your face with a shape, tap save to add the photo to your camera roll. The app only adds photos and never reads your existing ones.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "fig.cam uses this identifier to show ads that are more relevant to you, such as the banner on the save screen. If you don't allow tracking, you can still use every feature of the app.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -446,7 +446,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.myammm.figcam;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -466,7 +466,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = OOTDCam/OOTDCam.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"OOTDCam/Preview Content\"";
 				DEVELOPMENT_TEAM = 9PF365R5K2;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -474,9 +474,9 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OOTDCam/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = fig.cam;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to take photos.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This app saves photos to your camera roll.";
-				INFOPLIST_KEY_NSUserTrackingUsageDescription = "This identifier will be used to show you ads that are more relevant to you.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "fig.cam uses the camera to take full-body outfit photos. For example, you can frame your whole outfit with the on-screen guide, take a photo, and blur your face in a heart or other shape before saving.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "fig.cam saves your edited outfit photos to your photo library. For example, after hiding your face with a shape, tap save to add the photo to your camera roll. The app only adds photos and never reads your existing ones.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "fig.cam uses this identifier to show ads that are more relevant to you, such as the banner on the save screen. If you don't allow tracking, you can still use every feature of the app.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -491,7 +491,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.myammm.figcam;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
