@@ -48,7 +48,7 @@ final class CameraService: NSObject, ObservableObject {
 
     /// startRunning / stopRunning はどちらも完了までブロックするので、
     /// メインスレッドでは呼ばず専用の直列キューで順序を保証して実行する
-    private let sessionQueue = DispatchQueue(label: "jp.linqinc.OOTDCam.cameraSession")
+    private let sessionQueue = DispatchQueue(label: "app.myammm.figcam.cameraSession")
 
     func startSession() {
         sessionQueue.async {
