@@ -1,3 +1,3 @@
-"NSCameraUsageDescription" = "写真を撮影するためにカメラを使用します";
-"NSPhotoLibraryAddUsageDescription" = "撮影した写真をカメラロールに保存するために使用します";
-"NSUserTrackingUsageDescription" = "あなたに関連性の高い広告を表示するために識別子を使用します";
+"NSCameraUsageDescription" = "全身コーデの写真を撮るためにカメラを使います。たとえば、画面のガイドに合わせて全身を撮影し、顔の部分をハートなどの形にぼかして隠し、保存できます。";
+"NSPhotoLibraryAddUsageDescription" = "撮影したコーデ写真をカメラロールに保存するために使います。たとえば、顔を隠した写真を保存ボタンからカメラロールに追加できます。写真の追加にのみ使用し、すでにある写真を読み取ることはありません。";
+"NSUserTrackingUsageDescription" = "あなたの興味に合った広告(保存画面のバナー広告など)を表示するために使います。許可しなくても、アプリのすべての機能をご利用いただけます。";
