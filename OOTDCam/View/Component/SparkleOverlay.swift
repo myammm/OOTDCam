@@ -67,16 +67,16 @@ private struct TwinkleStar: View {
             .shadow(color: .white.opacity(0.8), radius: 1.5)
             .scaleEffect(scale)
             .opacity(opacity)
-            .onAppear {
+            .task {
                 withAnimation(.spring(response: 0.24, dampingFraction: 0.55).delay(delay)) {
                     scale = 1
                     opacity = 1
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay + 0.32) {
-                    withAnimation(.easeOut(duration: 0.22)) {
-                        scale = 0.5
-                        opacity = 0
-                    }
+                // 画面から外れたら .task ごとキャンセルされ、消える演出も走らない
+                guard (try? await Task.sleep(for: .seconds(delay + 0.32))) != nil else { return }
+                withAnimation(.easeOut(duration: 0.22)) {
+                    scale = 0.5
+                    opacity = 0
                 }
             }
     }

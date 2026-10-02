@@ -189,7 +189,7 @@ struct ReviewView: View {
         withTransaction(transaction) {
             shapePopScale = 0.3
         }
-        Task { @MainActor in
+        Task {
             withAnimation(Self.overlayToggleAnimation) {
                 shapePopScale = 1.0
             }
@@ -341,7 +341,7 @@ struct ReviewView: View {
             triggerShapeRowPulse()
         }
 
-        lockedHintDismissTask = Task { @MainActor in
+        lockedHintDismissTask = Task {
             try? await Task.sleep(for: .seconds(2.2))
             guard !Task.isCancelled else { return }
             withAnimation(.easeOut(duration: 0.35)) { showLockedHint = false }
@@ -354,7 +354,7 @@ struct ReviewView: View {
         withAnimation(.spring(response: 0.22, dampingFraction: 0.5)) {
             shapeRowPulse = 1.05
         }
-        Task { @MainActor in
+        Task {
             try? await Task.sleep(for: .milliseconds(140))
             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                 shapeRowPulse = 1.0

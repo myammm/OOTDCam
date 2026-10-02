@@ -8,6 +8,7 @@
 import SwiftUI
 import AVFoundation
 
+@MainActor
 final class CameraViewModel: ObservableObject {
     @Published var isShutterAnimating: Bool = false
     @Published var showSparkles: Bool = false
@@ -53,20 +54,14 @@ final class CameraViewModel: ObservableObject {
             // カメラ権限
             cameraAuthorized = await checkCameraPermission()
             guard cameraAuthorized else {
-                // 権限拒否なら即フラグを立てる
-                DispatchQueue.main.async {
-                    self.cameraPermissionDenied = true
-                }
+                cameraPermissionDenied = true
                 return
             }
             
             // 写真ライブラリ権限
             photoLibraryAuthorized = await photoLibrary.requestAddPermission()
             guard photoLibraryAuthorized else {
-                // 権限拒否なら即フラグを立てる
-                DispatchQueue.main.async {
-                    self.photoLibraryPermissionDenied = true
-                }
+                photoLibraryPermissionDenied = true
                 return
             }
             
@@ -81,11 +76,9 @@ final class CameraViewModel: ObservableObject {
         case .authorized:
             return true
         case .notDetermined:
-            return await withCheckedContinuation { continuation in
-                AVCaptureDevice.requestAccess(for: .video) { granted in
-                    continuation.resume(returning: granted)
-                }
-            }
+            // 完了ハンドラ版はバックグラウンドで呼ばれ、メインアクター上で書いたクロージャだと
+            // Swift 6 の実行時アイソレーションチェックで落ちるため async 版を使う
+            return await AVCaptureDevice.requestAccess(for: .video)
         case .denied, .restricted:
             return false
         @unknown default:
@@ -105,50 +98,41 @@ final class CameraViewModel: ObservableObject {
         service.freezePreview()
 
         // 撮影処理 (保存はレビュー画面の DONE で行うため、ここでは保持のみ)
-        // capturePhoto のコールバックは AVFoundation のバックグラウンドキューで呼ばれるので、
-        // @Published の変更は必ずメインへディスパッチする
-        service.capturePhoto(visibleRectInLayer: visibleRect) { [weak self] photo in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                if let photo {
-                    self.lastCapturedPhoto = photo
-                } else {
-                    // 撮影失敗時はライブプレビューに戻して撮り直せるようにする
-                    self.service.unfreezePreview()
-                }
-            }
-        }
-        
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            isShutterAnimating = true
-        }
-        
-        // シャッターアニメーション後に戻す
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            withAnimation {
-                self.isShutterAnimating = false
-            }
-        }
-        
-        // きらめき演出をトリガー
-        withAnimation {
-            showSparkles = true
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            withAnimation {
-                self.showSparkles = false
+        Task {
+            if let photo = await service.capturePhoto(visibleRectInLayer: visibleRect) {
+                lastCapturedPhoto = photo
+            } else {
+                // 撮影失敗時はライブプレビューに戻して撮り直せるようにする
+                service.unfreezePreview()
             }
         }
 
+        playShutterEffects()
+    }
+
+    /// シャッター・フラッシュ・きらめきの演出。出すのは同時、戻すのは時間差
+    private func playShutterEffects() {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            isShutterAnimating = true
+        }
+        withAnimation {
+            showSparkles = true
+        }
         // フラッシュの膜 (素早く出て、ゆっくり消える)
         withAnimation(.easeOut(duration: 0.09)) {
             showFlash = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            withAnimation(.easeOut(duration: 0.4)) {
-                self.showFlash = false
-            }
+
+        Task {
+            try? await Task.sleep(for: .seconds(0.1))
+            withAnimation(.easeOut(duration: 0.4)) { showFlash = false }
+
+            try? await Task.sleep(for: .seconds(0.4))
+            withAnimation { isShutterAnimating = false }
+
+            // きらめきは SparkleOverlay の演出が 0.8 秒以内に収まる前提
+            try? await Task.sleep(for: .seconds(0.3))
+            withAnimation { showSparkles = false }
         }
     }
-
 }

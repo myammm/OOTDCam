@@ -5,19 +5,26 @@
 //  Created by maya yamada on 2025/09/23.
 //
 
-import AVFoundation
+@preconcurrency import AVFoundation
 import UIKit
 import ImageIO
 
-final class CameraService: NSObject, ObservableObject {
+/// スレッドの使い分け:
+/// - API・プレビューレイヤー・撮影中の processor 管理はメインアクター (UI から呼ばれ、レイヤーを触るため)
+/// - セッションの start/stop と撮影の投入は sessionQueue (完了までブロックする・重い処理のため)
+/// AVFoundation の型は Sendable 未対応なので @preconcurrency import で受ける。
+/// sessionQueue へ渡すのはセッション・フォトアウトプット・撮影設定と processor だけで、
+/// 渡した後はメインアクター側から触らない
+@MainActor
+final class CameraService {
     let session = AVCaptureSession()
-    private var photoOutput = AVCapturePhotoOutput()
+    private let photoOutput = AVCapturePhotoOutput()
     weak var activePreviewLayer: AVCaptureVideoPreviewLayer?
 
-    private var currentProcessors: [PhotoCaptureProcessor] = []
+    /// AVCapturePhotoOutput はデリゲートを強参照しないため、撮影完了まで保持する
+    private var inFlightProcessors: [Int64: PhotoCaptureProcessor] = [:]
 
-    override init() {
-        super.init()
+    init() {
         configureSession()
     }
 
@@ -48,20 +55,23 @@ final class CameraService: NSObject, ObservableObject {
 
     /// startRunning / stopRunning はどちらも完了までブロックするので、
     /// メインスレッドでは呼ばず専用の直列キューで順序を保証して実行する
-    private let sessionQueue = DispatchQueue(label: "jp.linqinc.OOTDCam.cameraSession")
+    private let sessionQueue = DispatchQueue(label: "app.myammm.figcam.cameraSession")
 
     func startSession() {
+        guard isConfigured else { return }
+        let session = session
         sessionQueue.async {
-            if self.isConfigured && !self.session.isRunning {
-                self.session.startRunning()
+            if !session.isRunning {
+                session.startRunning()
             }
         }
     }
 
     func stopSession() {
+        let session = session
         sessionQueue.async {
-            if self.session.isRunning {
-                self.session.stopRunning()
+            if session.isRunning {
+                session.stopRunning()
             }
         }
     }
@@ -77,68 +87,62 @@ final class CameraService: NSObject, ObservableObject {
         activePreviewLayer?.connection?.isEnabled = true
     }
 
-    /// 撮影 + 「プレビュー上の可視矩形」だけクロップして返す
+    /// 撮影 + 「プレビュー上の可視矩形」だけクロップして返す。失敗時は nil
     /// - Parameter visibleRectInLayer: プレビューレイヤーのローカル座標での可視矩形
     ///   (プレビューがレイヤー全域を占める場合は origin .zero + レイヤーサイズ)
-    func capturePhoto(
-        visibleRectInLayer: CGRect,
-        completion: @escaping (CapturedPhoto?) -> Void
-    ) {
+    func capturePhoto(visibleRectInLayer: CGRect) async -> CapturedPhoto? {
         // スクショモード: サンプル写真をそのまま撮影結果として返し、編集画面まで通す
         if let sample = ScreenshotMode.samplePhoto {
-            DispatchQueue.global(qos: .userInitiated).async {
-                completion(CapturedPhoto(
-                    original: sample,
-                    display: ImageCompositor.displayImage(from: sample)
-                ))
-            }
-            return
-        }
-        // canonical な AVFoundation 変換: 各コーナーをセンサー正規化座標 [0,1]^2 に変換
-        // (videoOrientation, gravity, scaling すべて内部で正しく扱ってくれる)
-        let normalizedRect: CGRect
-        if let layer = activePreviewLayer {
-            let tl = layer.captureDevicePointConverted(fromLayerPoint: CGPoint(x: visibleRectInLayer.minX, y: visibleRectInLayer.minY))
-            let br = layer.captureDevicePointConverted(fromLayerPoint: CGPoint(x: visibleRectInLayer.maxX, y: visibleRectInLayer.maxY))
-            normalizedRect = CGRect(
-                x: min(tl.x, br.x),
-                y: min(tl.y, br.y),
-                width: abs(br.x - tl.x),
-                height: abs(br.y - tl.y)
-            )
-        } else {
-            normalizedRect = CGRect(x: 0, y: 0, width: 1, height: 1)
+            return await Task.detached(priority: .userInitiated) {
+                CapturedPhoto(original: sample, display: ImageCompositor.displayImage(from: sample))
+            }.value
         }
 
+        let normalizedRect = normalizedSensorRect(for: visibleRectInLayer)
         let settings = AVCapturePhotoSettings()
-        var processor: PhotoCaptureProcessor!
-        processor = PhotoCaptureProcessor(completion: { [weak self] image in
-            // クロップと表示用縮小はバックグラウンドで行う
-            DispatchQueue.global(qos: .userInitiated).async {
-                let cropped = image.flatMap { Self.cropByNormalizedSensorRect($0, normalizedRect: normalizedRect) } ?? image
-                let photo = cropped.map {
-                    CapturedPhoto(original: $0, display: ImageCompositor.displayImage(from: $0))
-                }
-                completion(photo)
+        let id = settings.uniqueID
+        let photoOutput = photoOutput
+
+        let image = await withCheckedContinuation { continuation in
+            let processor = PhotoCaptureProcessor { continuation.resume(returning: $0) }
+            inFlightProcessors[id] = processor
+            // デリゲートは capturePhoto を呼んだスレッドで呼ばれる。メインから呼ぶと
+            // cgImageRepresentation() の写真デコードがメインで走り、動きのある撮影
+            // (多フレーム合成で処理が重い) で実際にハングするため、必ず sessionQueue から投入する
+            sessionQueue.async {
+                photoOutput.capturePhoto(with: settings, delegate: processor)
             }
-            // currentProcessors はメインでのみ触る (append もメインから)
-            DispatchQueue.main.async {
-                self?.currentProcessors.removeAll { $0 === processor }
-            }
-        })
-        currentProcessors.append(processor)
-        // デリゲートは capturePhoto を呼んだスレッドで呼ばれる。メインから呼ぶと
-        // cgImageRepresentation() の写真デコードがメインで走り、動きのある撮影
-        // (多フレーム合成で処理が重い) で実際にハングするため、必ず sessionQueue から投入する
-        sessionQueue.async {
-            self.photoOutput.capturePhoto(with: settings, delegate: processor)
         }
+        inFlightProcessors[id] = nil
+
+        guard let image else { return nil }
+        // クロップと表示用縮小はバックグラウンドで行う
+        return await Task.detached(priority: .userInitiated) {
+            let cropped = Self.cropByNormalizedSensorRect(image, normalizedRect: normalizedRect) ?? image
+            return CapturedPhoto(original: cropped, display: ImageCompositor.displayImage(from: cropped))
+        }.value
+    }
+
+    /// canonical な AVFoundation 変換: 各コーナーをセンサー正規化座標 [0,1]^2 に変換
+    /// (videoOrientation, gravity, scaling すべて内部で正しく扱ってくれる)
+    private func normalizedSensorRect(for visibleRectInLayer: CGRect) -> CGRect {
+        guard let layer = activePreviewLayer else {
+            return CGRect(x: 0, y: 0, width: 1, height: 1)
+        }
+        let tl = layer.captureDevicePointConverted(fromLayerPoint: CGPoint(x: visibleRectInLayer.minX, y: visibleRectInLayer.minY))
+        let br = layer.captureDevicePointConverted(fromLayerPoint: CGPoint(x: visibleRectInLayer.maxX, y: visibleRectInLayer.maxY))
+        return CGRect(
+            x: min(tl.x, br.x),
+            y: min(tl.y, br.y),
+            width: abs(br.x - tl.x),
+            height: abs(br.y - tl.y)
+        )
     }
 
     /// `captureDevicePointConverted` が返すのは raw センサー (landscape) 座標系の正規化値。
     /// 撮影画像の cgImage も raw (landscape) なので、そのまま掛け算すれば pixel rect が得られる。
     /// 画像の orientation (.right 等) はクロップ後に維持する。
-    static func cropByNormalizedSensorRect(_ image: UIImage, normalizedRect: CGRect) -> UIImage? {
+    nonisolated static func cropByNormalizedSensorRect(_ image: UIImage, normalizedRect: CGRect) -> UIImage? {
         guard let cgImage = image.cgImage else { return image }
         let w = CGFloat(cgImage.width)
         let h = CGFloat(cgImage.height)
@@ -157,10 +161,10 @@ final class CameraService: NSObject, ObservableObject {
 }
 
 // MARK: - PhotoCaptureProcessor
-private class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate {
-    private let completion: (UIImage?) -> Void
+private final class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate, Sendable {
+    private let completion: @Sendable (UIImage?) -> Void
 
-    init(completion: @escaping (UIImage?) -> Void) {
+    init(completion: @escaping @Sendable (UIImage?) -> Void) {
         self.completion = completion
     }
 

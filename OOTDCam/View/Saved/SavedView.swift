@@ -37,7 +37,7 @@ struct SavedView: View {
                 adSlot
             }
         }
-        .onAppear(perform: runSequence)
+        .task { try? await runSequence() }
         .sheet(isPresented: $showShareSheet) {
             ShareSheet(items: [shareItem])
                 .presentationDetents([.medium])
@@ -190,26 +190,25 @@ struct SavedView: View {
 
     // MARK: - 演出の順番
 
-    private func runSequence() {
+    /// 画面から外れると .task ごとキャンセルされ、以降の演出は打ち切られる
+    private func runSequence() async throws {
         if reduceMotion {
             // 浮上と膜の演出は止め、トーストはフェードのみ
             appeared = true
             withAnimation(.easeInOut(duration: 0.3)) { showToast = true }
+            try await Task.sleep(for: .seconds(2.95))
         } else {
             withAnimation(.spring(response: 0.7, dampingFraction: 0.78)) {
                 appeared = true
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
-                    showToast = true
-                }
+            try await Task.sleep(for: .seconds(0.35))
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                showToast = true
             }
+            // 出る → とどまる → 消える で計 2.6 秒 (0.35 + 2.6 = 2.95)
+            try await Task.sleep(for: .seconds(2.6))
         }
-
-        // 出る → とどまる → 消える で計 2.6 秒 (0.35 + 2.6 = 2.95)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.95) {
-            withAnimation(.easeOut(duration: 0.4)) { showToast = false }
-        }
+        withAnimation(.easeOut(duration: 0.4)) { showToast = false }
     }
 }
 
