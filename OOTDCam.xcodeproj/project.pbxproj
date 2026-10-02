@@ -430,6 +430,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OOTDCam/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = fig.cam;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "fig.cam uses the camera to take full-body outfit photos. For example, you can frame your whole outfit with the on-screen guide, take a photo, and blur your face in a heart or other shape before saving.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "fig.cam saves your edited outfit photos to your photo library. For example, after hiding your face with a shape, tap save to add the photo to your camera roll. The app only adds photos and never reads your existing ones.";
 				INFOPLIST_KEY_NSUserTrackingUsageDescription = "fig.cam uses this identifier to show ads that are more relevant to you, such as the banner on the save screen. If you don't allow tracking, you can still use every feature of the app.";
@@ -477,6 +478,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = OOTDCam/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = fig.cam;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "fig.cam uses the camera to take full-body outfit photos. For example, you can frame your whole outfit with the on-screen guide, take a photo, and blur your face in a heart or other shape before saving.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "fig.cam saves your edited outfit photos to your photo library. For example, after hiding your face with a shape, tap save to add the photo to your camera roll. The app only adds photos and never reads your existing ones.";
 				INFOPLIST_KEY_NSUserTrackingUsageDescription = "fig.cam uses this identifier to show ads that are more relevant to you, such as the banner on the save screen. If you don't allow tracking, you can still use every feature of the app.";
