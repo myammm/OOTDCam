@@ -8,7 +8,7 @@ import UIKit
 
 /// 写真ライブラリの保存と権限確認の境界。
 /// ViewModel は Photos に直接依存せず、このプロトコル越しに扱う (テスト時はモック差し替え)
-protocol PhotoLibrarySaving {
+protocol PhotoLibrarySaving: Sendable {
     /// 追加専用 (.addOnly) 権限を確認し、未決定ならリクエストする
     func requestAddPermission() async -> Bool
     /// カメラロールへ保存する。iOS 側で再エンコードされるため、
@@ -25,11 +25,8 @@ final class PhotoLibraryService: PhotoLibrarySaving {
         case .authorized, .limited:
             return true
         case .notDetermined:
-            return await withCheckedContinuation { continuation in
-                PHPhotoLibrary.requestAuthorization(for: .addOnly) { newStatus in
-                    continuation.resume(returning: newStatus == .authorized || newStatus == .limited)
-                }
-            }
+            let newStatus = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+            return newStatus == .authorized || newStatus == .limited
         case .denied, .restricted:
             return false
         @unknown default:

@@ -9,7 +9,7 @@ import SwiftUI
 import AVFoundation
 
 struct CameraPreviewView: UIViewRepresentable {
-    @ObservedObject var service: CameraService
+    let service: CameraService
     var gravity: AVLayerVideoGravity = .resizeAspect
     /// 撮影時のクロップ計算用にレイヤーを CameraService に登録するか
     var registerForCapture: Bool = true

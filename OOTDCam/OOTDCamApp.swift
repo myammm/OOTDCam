@@ -39,7 +39,9 @@ struct OOTDCamApp: App {
                     guard newPhase == .active,
                           isSecondOrLaterLaunch,
                           ATTrackingManager.trackingAuthorizationStatus == .notDetermined else { return }
-                    ATTrackingManager.requestTrackingAuthorization { _ in }
+                    // 完了ハンドラ版はバックグラウンドで呼ばれ、メインアクター上で書いたクロージャだと
+                    // Swift 6 の実行時アイソレーションチェックで落ちるため async 版を使う
+                    Task { _ = await ATTrackingManager.requestTrackingAuthorization() }
                 }
         }
     }
