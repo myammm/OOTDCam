@@ -33,8 +33,11 @@ struct SavedView: View {
             VStack(spacing: 0) {
                 SavedHeader(contentWidth: photoAreaWidth, onBack: onBack)
                 photoPlate
-                actions
-                adSlot
+                SavedActions(onShare: { showShareSheet = true }, onShoot: onShoot)
+                    // 左右は実際に表示されている写真の幅に揃える (ReviewControlPad と同じ方式)
+                    .frame(width: photoAreaWidth > 0 ? photoAreaWidth : nil)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                SavedAdSlot()
             }
         }
         .task { try? await runSequence() }
@@ -106,88 +109,6 @@ struct SavedView: View {
         )
     }
 
-    // MARK: - 操作
-
-    /// 主 CTA は撮影ループの頻度が高い「続けて撮る」(iris)。
-    /// iOS の慣習 (横並びの右=推奨アクション) に合わせて右に置き、強調色もセットで揃える
-    private var actions: some View {
-        HStack(spacing: 10) {
-            Button {
-                showShareSheet = true
-            } label: {
-                Text("共有する")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .tracking(0.5)
-                    .foregroundStyle(Pearl.ink)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background {
-                        Capsule()
-                            .fill(
-                                LinearGradient(
-                                    stops: [
-                                        .init(color: Color(.glassHighlight), location: 0),
-                                        .init(color: Color(.glassMid), location: 0.55),
-                                        .init(color: Color(.glassLow), location: 1)
-                                    ],
-                                    startPoint: .top, endPoint: .bottom
-                                )
-                                .shadow(.inner(color: Color(.glassInnerShadow).opacity(0.35), radius: 4, y: 3))
-                                .shadow(.inner(color: .white.opacity(0.95), radius: 4, y: -3))
-                            )
-                            .shadow(color: Pearl.shadow.opacity(0.55), radius: 5, y: 5)
-                    }
-            }
-            .buttonStyle(PressScaleButtonStyle())
-
-            Button(action: onShoot) {
-                Text("続けて撮る")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .tracking(0.5)
-                    .foregroundStyle(Pearl.inkDeep)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background {
-                        // 形は編集画面の完了ボタン (irisCapsule) に合わせる
-                        Capsule()
-                            .fill(Pearl.iris.shadow(.inner(color: .white.opacity(0.7), radius: 3, y: -2)))
-                            .shadow(color: Color(.irisButtonGlow).opacity(0.9), radius: 8, y: 7)
-                    }
-            }
-            .buttonStyle(PressScaleButtonStyle())
-        }
-        // 左右は実際に表示されている写真の幅に揃える (ReviewView の controlPad と同じ方式)
-        .frame(width: photoAreaWidth > 0 ? photoAreaWidth : nil)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    // MARK: - 広告
-
-    private var adSlot: some View {
-        VStack(spacing: 4) {
-            Text("広告")
-                .font(.system(size: 9.5))
-                .kerning(1)
-                .foregroundStyle(Color(.adLabelText))
-            BannerAdView()
-                .frame(height: 50)
-                .frame(maxWidth: .infinity)
-                .overlay(alignment: .top) { adDivider }
-                .overlay(alignment: .bottom) { adDivider }
-        }
-        // 「続けて撮る」との間隔 20pt。ボタンに隣接させると誤タップが増え、
-        // 無効トラフィックとして跳ね返るので詰めないこと
-        .padding(.top, 20)
-        // SE (667pt) はこの画面が縦ぴったりで、10pt だと広告が下端からはみ出す
-        .padding(.bottom, 6)
-    }
-
-    private var adDivider: some View {
-        Rectangle()
-            .fill(Color(.adDivider).opacity(0.14))
-            .frame(height: 1)
-    }
-
     // MARK: - 演出の順番
 
     /// 画面から外れると .task ごとキャンセルされ、以降の演出は打ち切られる
@@ -210,114 +131,6 @@ struct SavedView: View {
         }
         withAnimation(.easeOut(duration: 0.4)) { showToast = false }
     }
-}
-
-// MARK: - Header
-
-private struct SavedHeader: View {
-    /// 実際に表示されている写真の幅。ボタン列の左右端はこれに揃える (ReviewHeader と同じ実測束縛方式)
-    let contentWidth: CGFloat
-    let onBack: () -> Void
-
-    var body: some View {
-        ZStack {
-            Wordmark()
-
-            HStack {
-                // 左上はアイコンだけのガラス球。「帯の ← = 1画面戻る」で編集画面と共通の文法
-                Button(action: onBack) {
-                    Text("←")
-                }
-                .buttonStyle(PearlCircleButtonStyle(size: Pearl.barButtonHeight))
-                .accessibilityLabel("編集に戻る")
-                Spacer()
-            }
-        }
-        // 実測幅が取れるまでの初回フレームだけ固定 padding で近似する
-        .frame(width: contentWidth > 0 ? contentWidth : nil)
-        .padding(.horizontal, contentWidth > 0 ? 0 : Pearl.barHorizontalPadding)
-        // 高さは撮影・編集の帯と揃える。揃えないとプレートの開始位置が
-        // クロスフェード中にずれて見える (#18 と同じ理由)
-        .frame(height: Pearl.topBarHeight)
-        .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - Toast
-
-private struct SavedToast: View {
-    var body: some View {
-        HStack(spacing: 8) {
-            Text("✓")
-                .font(.system(size: 12, weight: .bold, design: .rounded))
-                .foregroundStyle(Pearl.inkDeep)
-                .frame(width: 22, height: 22)
-                .background(Circle().fill(Pearl.iris))
-            Text("カメラロールに保存しました")
-                .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundStyle(Pearl.ink)
-        }
-        .padding(.vertical, 11)
-        .padding(.horizontal, 18)
-        .background {
-            // 背面ぼかしが意味を持つ唯一の場所。帯の上では背景が不透明で効かないが、
-            // ここは写真の上なので実際に写真がぼけて透ける
-            Capsule()
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    Capsule().fill(
-                        Color.white.opacity(0.5)
-                            .shadow(.inner(color: .white.opacity(0.8), radius: 3, y: -2))
-                    )
-                )
-                .overlay(Capsule().strokeBorder(Pearl.glassEdgeLine, lineWidth: 1.2))
-                .shadow(color: Color(.toastShadow).opacity(0.7), radius: 12, y: 10)
-        }
-    }
-}
-
-// MARK: - Sweep
-
-/// 保存の合図として写真の上を一度だけ左から右に走る虹色の膜。
-/// 色は撮影フラッシュ (Pearl.flash) と同じにして、撮影 → 保存を同じ光の演出でつなぐ
-private struct SweepOverlay: View {
-    @State private var go = false
-
-    var body: some View {
-        GeometryReader { geo in
-            Pearl.flash
-                .mask(
-                    LinearGradient(
-                        stops: [
-                            .init(color: .clear, location: 0.30),
-                            .init(color: .white.opacity(0.55), location: 0.50),
-                            .init(color: .clear, location: 0.70)
-                        ],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    )
-                    .frame(width: geo.size.width * 1.6)
-                    .offset(x: go ? geo.size.width * 0.6 : -geo.size.width * 0.9)
-                )
-                .opacity(go ? 0 : 1)
-                .onAppear {
-                    withAnimation(.easeOut(duration: 1).delay(0.25)) { go = true }
-                }
-        }
-        .allowsHitTesting(false)
-    }
-}
-
-// MARK: - Share
-
-/// UIActivityViewController のラッパー。フル解像度 (保存したものと同一) を渡す
-private struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Preview
