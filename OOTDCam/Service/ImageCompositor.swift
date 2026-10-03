@@ -57,7 +57,7 @@ final class ImageCompositor {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyyMMdd_HHmmss"
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("OOTDCam_\(formatter.string(from: date)).jpg")
+            .appendingPathComponent("figcam_\(formatter.string(from: date)).jpg")
         do {
             try data.write(to: url, options: .atomic)
             return url
