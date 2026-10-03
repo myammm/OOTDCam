@@ -72,11 +72,26 @@ struct ImageCompositorTests {
         )
 
         let url = try #require(ImageCompositor.writeJPEG(image, date: date))
-        defer { try? FileManager.default.removeItem(at: url) }
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
 
         #expect(url.lastPathComponent == "figcam_20260102_030405.jpg")
         let decoded = try #require(UIImage(contentsOfFile: url.path))
         #expect(TestImages.pixelSize(of: decoded) == CGSize(width: 40, height: 30))
+    }
+
+    /// 同じ秒の撮影や編集後の再保存でも、前に書き出したファイルを上書きしない
+    @Test func writeJPEGは同じ日時でも別のファイルに書き出す() throws {
+        let date = Date()
+
+        let first = try #require(ImageCompositor.writeJPEG(TestImages.solid(.black, width: 40, height: 30), date: date))
+        defer { try? FileManager.default.removeItem(at: first.deletingLastPathComponent()) }
+        let second = try #require(ImageCompositor.writeJPEG(TestImages.solid(.white, width: 40, height: 30), date: date))
+        defer { try? FileManager.default.removeItem(at: second.deletingLastPathComponent()) }
+
+        #expect(first != second)
+        #expect(first.lastPathComponent == second.lastPathComponent)
+        let firstPixels = try #require(UIImage(contentsOfFile: first.path).flatMap(PixelBuffer.init))
+        #expect(firstPixels.rgb(x: 20, y: 15).distance(to: .init(r: 0, g: 0, b: 0)) <= 8)
     }
 
     // MARK: - drawDateStamp
@@ -91,13 +106,21 @@ struct ImageCompositorTests {
 
         let pixels = try #require(PixelBuffer(stamped))
         let black = PixelBuffer.RGB(r: 0, g: 0, b: 0)
-        #expect(pixels.rgb(x: 10, y: 10).distance(to: black) <= 2)
-
-        // 右下の一帯 (文字＋グロウが乗る範囲) に黒以外の画素がある
-        let hasInk = (300..<360).contains { y in
-            (240..<360).contains { x in pixels.rgb(x: x, y: y).distance(to: black) > 30 }
+        // 右下の一帯 (文字＋グロウが乗る範囲) とそれ以外に分けて確かめる
+        let stampArea = CGRect(x: 240, y: 300, width: 120, height: 60)
+        var hasInk = false
+        var inkOutsideStampArea = false
+        for y in 0..<pixels.height {
+            for x in 0..<pixels.width where pixels.rgb(x: x, y: y).distance(to: black) > 2 {
+                if stampArea.contains(CGPoint(x: x, y: y)) {
+                    hasInk = true
+                } else {
+                    inkOutsideStampArea = true
+                }
+            }
         }
         #expect(hasInk)
+        #expect(!inkOutsideStampArea)
     }
 
     // MARK: - compose

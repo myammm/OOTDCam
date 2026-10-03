@@ -8,14 +8,19 @@ import Testing
 import UIKit
 @testable import OOTDCam
 
-/// Photos に触らず、保存の呼び出し回数と失敗を制御するモック
+/// Photos に触らず、保存の呼び出しと失敗を制御するモック
 actor MockPhotoLibrary: PhotoLibrarySaving {
     struct SaveError: LocalizedError {
         var errorDescription: String? { "mock failure" }
     }
 
-    private(set) var saveCount = 0
+    /// save(contentsOf:) で渡されたファイル
+    private(set) var savedFileURLs: [URL] = []
+    /// save(_:) (iOS 側で再エンコードする経路) の呼び出し回数
+    private(set) var savedImageCount = 0
     private var shouldFail = false
+
+    var saveCount: Int { savedFileURLs.count + savedImageCount }
 
     func setShouldFail(_ value: Bool) {
         shouldFail = value
@@ -25,12 +30,12 @@ actor MockPhotoLibrary: PhotoLibrarySaving {
 
     func save(_ image: UIImage) async throws {
         if shouldFail { throw SaveError() }
-        saveCount += 1
+        savedImageCount += 1
     }
 
     func save(contentsOf url: URL) async throws {
         if shouldFail { throw SaveError() }
-        saveCount += 1
+        savedFileURLs.append(url)
     }
 }
 
@@ -48,8 +53,9 @@ struct ReviewViewModelTests {
     }
 
     private func removeTemporaryFile(of photo: SavedPhoto?) {
+        // writeJPEG は書き出しごとのディレクトリに置くので、ディレクトリごと消す
         if let url = photo?.fileURL {
-            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: url.deletingLastPathComponent())
         }
     }
 
@@ -77,7 +83,10 @@ struct ReviewViewModelTests {
         let second = await viewModel.compositeAndSave(areaSize: areaSize)
         defer { removeTemporaryFile(of: second) }
 
-        #expect(second != nil)
+        let firstURL = try #require(first?.fileURL)
+        let secondURL = try #require(second?.fileURL)
+        #expect(firstURL != secondURL)
+        #expect(FileManager.default.fileExists(atPath: firstURL.path))
         #expect(await library.saveCount == 2)
     }
 
@@ -127,6 +136,50 @@ struct ReviewViewModelTests {
 
         #expect(saved.display.size == CGSize(width: 300, height: 400))
         #expect(await library.saveCount == 1)
+    }
+
+    /// エンコードは 1 回だけ: カメラロールには書き出した JPEG をそのまま渡し、共有用にも同じファイルを返す
+    @Test func 書き出したファイルをそのままカメラロールに保存し共有にも使う() async throws {
+        let library = MockPhotoLibrary()
+        let viewModel = makeViewModel(photoLibrary: library)
+
+        let saved = try #require(await viewModel.compositeAndSave(areaSize: areaSize))
+        defer { removeTemporaryFile(of: saved) }
+
+        let fileURL = try #require(saved.fileURL)
+        #expect(await library.savedFileURLs == [fileURL])
+        #expect(await library.savedImageCount == 0)
+        #expect(FileManager.default.fileExists(atPath: fileURL.path))
+    }
+
+    /// 写真エリア座標 → 元画像ピクセル座標の変換を、保存された画像の画素で確かめる。
+    /// 元画像 600×800 を 300×500 のエリアに表示すると、上下に 50pt ずつ余白ができ、1pt = 2px になる
+    @Test func カバーは表示位置に対応する元画像の位置に焼き込まれる() async throws {
+        let gray = PixelBuffer.RGB(r: 128, g: 128, b: 128)
+        let image = TestImages.solid(UIColor(white: 128.0 / 255.0, alpha: 1), width: 600, height: 800)
+        let library = MockPhotoLibrary()
+        let viewModel = ReviewViewModel(photo: CapturedPhoto(original: image, display: image), photoLibrary: library)
+        let area = CGSize(width: 300, height: 500)
+        viewModel.selectShape(.star, areaSize: area)
+        viewModel.sheer = 1
+        viewModel.blur = 0
+        viewModel.includeDateStamp = false
+        // 表示写真の左上寄り (写真内 60, 100pt) → 元画像 (120, 200px)
+        viewModel.translate(to: CGPoint(x: 60, y: 150))
+
+        let saved = try #require(await viewModel.compositeAndSave(areaSize: area))
+        defer { removeTemporaryFile(of: saved) }
+
+        let fileURL = try #require(saved.fileURL)
+        let written = try #require(UIImage(contentsOfFile: fileURL.path))
+        let pixels = try #require(PixelBuffer(written))
+        #expect(pixels.width == 600 && pixels.height == 800)
+        // JPEG の圧縮誤差があるので許容幅は広めに取る
+        #expect(pixels.rgb(x: 120, y: 200).distance(to: gray) > 20)
+        // 余白分 (50pt = 100px) のずれや縦横の取り違えがあると、ここに色が乗る / 中心から外れる
+        #expect(pixels.rgb(x: 120, y: 300).distance(to: gray) <= 8)
+        #expect(pixels.rgb(x: 200, y: 120).distance(to: gray) <= 8)
+        #expect(pixels.rgb(x: 480, y: 600).distance(to: gray) <= 8)
     }
 
     // MARK: - サイズの段階
