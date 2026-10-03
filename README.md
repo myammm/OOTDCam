@@ -1,5 +1,7 @@
 # fig.cam
 
+[![Test](https://github.com/myammm/OOTDCam/actions/workflows/test.yml/badge.svg)](https://github.com/myammm/OOTDCam/actions/workflows/test.yml)
+
 顔を隠して全身コーデを撮る OOTD カメラアプリ (iOS)。
 
 撮影ガイドに合わせて撮り、顔の位置にハート・星などのモチーフを重ねてぼかし＋グラデーションで隠す。日付スタンプを焼き込んでカメラロールへ保存・共有できる。
