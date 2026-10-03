@@ -7,18 +7,23 @@ import SwiftUI
 
 /// 保存完了画面下部のバナー広告枠 (撮影・編集画面には広告を入れない)
 struct SavedAdSlot: View {
+    /// 広告が届くまで「広告」表記と区切り線も隠す (場所は確保したまま)
+    @State private var isAdLoaded = false
+
     var body: some View {
         VStack(spacing: 4) {
             Text("広告")
                 .font(.system(size: 9.5))
                 .kerning(1)
                 .foregroundStyle(Color(.adLabelText))
-            BannerAdView()
+                .opacity(isAdLoaded ? 1 : 0)
+            BannerAdView(isLoaded: $isAdLoaded)
                 .frame(height: 50)
                 .frame(maxWidth: .infinity)
                 .overlay(alignment: .top) { adDivider }
                 .overlay(alignment: .bottom) { adDivider }
         }
+        .animation(.easeOut(duration: 0.2), value: isAdLoaded)
         // 「続けて撮る」との間隔 20pt。ボタンに隣接させると誤タップが増え、
         // 無効トラフィックとして跳ね返るので詰めないこと
         .padding(.top, 20)
@@ -28,7 +33,7 @@ struct SavedAdSlot: View {
 
     private var adDivider: some View {
         Rectangle()
-            .fill(Color(.adDivider).opacity(0.14))
+            .fill(Color(.adDivider).opacity(isAdLoaded ? 0.14 : 0))
             .frame(height: 1)
     }
 }
