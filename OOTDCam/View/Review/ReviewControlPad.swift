@@ -9,8 +9,6 @@ import SwiftUI
 
 struct ReviewControlPad: View {
     @ObservedObject var viewModel: ReviewViewModel
-    /// 実測した写真エリアのサイズ。形・色の選択時にモチーフ位置の補正に使う
-    let areaSize: CGSize
     /// 表示中に別の形へ切り替えたとき (ポップ演出の再生用)
     let onShapeSwitch: () -> Void
 
@@ -142,7 +140,7 @@ struct ReviewControlPad: View {
                     // なし→表示は hasOverlay 側の scaleEffect が同じ演出を担うので二重にしない
                     let isShapeSwitch = viewModel.hasOverlay && viewModel.selectedShape != shapeID
                     withAnimation(ReviewView.overlayToggleAnimation) {
-                        viewModel.selectShape(shapeID, areaSize: areaSize)
+                        viewModel.selectShape(shapeID)
                     }
                     if isShapeSwitch {
                         onShapeSwitch()
@@ -164,7 +162,7 @@ struct ReviewControlPad: View {
                     gradient: gradient,
                     isSelected: viewModel.selectedGradientID == gradient.id
                 ) {
-                    viewModel.selectGradient(id: gradient.id, areaSize: areaSize)
+                    viewModel.selectGradient(id: gradient.id)
                 }
             }
         }

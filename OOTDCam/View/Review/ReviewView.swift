@@ -101,7 +101,6 @@ struct ReviewView: View {
     private var boundControlPad: some View {
         ReviewControlPad(
             viewModel: viewModel,
-            areaSize: lastPhotoAreaSize,
             onShapeSwitch: triggerShapePop
         )
         .frame(width: lastPhotoAreaSize.width > 0 ? lastPhotoAreaSize.width : nil)

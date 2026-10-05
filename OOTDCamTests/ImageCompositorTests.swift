@@ -132,7 +132,7 @@ struct ImageCompositorTests {
         let composed = try #require(ImageCompositor().compose(
             original: image,
             shape: .star,
-            gradient: CoverPresets.gradient(id: "pink"),
+            gradient: CoverPresets.gradient(id: .pink),
             sheer: 1,
             blurRadius: 0,
             overlayRectInOriginal: CGRect(x: 50, y: 50, width: 100, height: 100)
@@ -154,7 +154,7 @@ struct ImageCompositorTests {
         let composed = try #require(ImageCompositor().compose(
             original: image,
             shape: .star,
-            gradient: CoverPresets.gradient(id: "pink"),
+            gradient: CoverPresets.gradient(id: .pink),
             sheer: 0,
             blurRadius: 20,
             overlayRectInOriginal: CGRect(x: 50, y: 50, width: 100, height: 100)
