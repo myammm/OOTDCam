@@ -17,11 +17,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.3.app
-      - name: Run unit tests
+      - name: Run tests
         run: |
           xcodebuild test \
             -project OOTDCam.xcodeproj \
             -scheme OOTDCam \
             -destination 'platform=iOS Simulator,name=iPhone 17' \
-            -only-testing:OOTDCamTests \
             CODE_SIGNING_ALLOWED=NO

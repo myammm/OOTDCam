@@ -47,6 +47,7 @@ struct ReviewHeader: View {
                 }
                 .buttonStyle(PressScaleButtonStyle())
                 .disabled(isSaving)
+                .accessibilityIdentifier("doneButton")
             }
         }
         // 実測幅が取れるまでの初回フレームだけ固定 padding で近似する
