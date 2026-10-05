@@ -26,9 +26,7 @@ struct OOTDCamApp: App {
 
         MobileAds.shared.start(completionHandler: nil)
         // RevenueCat は広告イベントのトラッキングにのみ使用 (IAP なし、issue #25)
-        if AdConfig.isRevenueCatKeySet {
-            Purchases.configure(withAPIKey: AdConfig.revenueCatAPIKey)
-        }
+        Purchases.configure(withAPIKey: AdConfig.revenueCatAPIKey)
     }
 
     var body: some Scene {
