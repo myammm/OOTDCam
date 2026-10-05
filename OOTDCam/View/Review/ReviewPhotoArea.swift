@@ -56,8 +56,8 @@ struct ReviewPhotoArea: View {
 
                 // 日付スタンプ: タップで保存時の焼き込み ON/OFF。OFF時は半透明で表示
                 // 位置は撮影画面・保存時の焼き込みと揃える (右12pt / 下10pt)
-                // スクショモードのサンプル写真はスタンプ焼き込み済みなのでライブ表示しない
-                if !ScreenshotMode.isActive {
+                // スクショモードのサンプル写真がスタンプ焼き込み済みならライブ表示しない
+                if !ScreenshotMode.hidesLiveDateStamp {
                     DateStamp(date: viewModel.capturedDate)
                         .opacity(viewModel.includeDateStamp ? 1.0 : 0.3)
                         .onTapGesture {

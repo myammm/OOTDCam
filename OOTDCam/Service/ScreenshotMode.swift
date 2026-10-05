@@ -4,9 +4,13 @@
 //
 //  App Store 用スクリーンショット撮影の補助。
 //  シミュレータではカメラが使えないため、プレビューと撮影結果を
-//  サンプル写真 (figcam で保存した実出力) に差し替える。
-//  サンプル写真には日付スタンプが焼き込み済みなので、
-//  有効時はライブの DateStamp 表示を止めて二重表示を防ぐ。
+//  サンプル写真に差し替える。
+//
+//  サンプル写真は起動引数で切り替える (未指定なら standard):
+//    xcrun simctl launch booted app.myammm.figcam -ScreenshotSample mirror
+//  - standard: figcam で保存した実出力。日付スタンプが焼き込み済みなので、
+//              ライブの DateStamp 表示を止めて二重表示を防ぐ
+//  - mirror:   鏡越しの撮影シーン (iPhone 標準カメラで撮影、スタンプなし)
 //
 //  写真は Preview Content (DEVELOPMENT_ASSET_PATHS) に置いているため、
 //  Archive ビルドには含まれない (リリースに個人写真を同梱しないため)。
@@ -17,11 +21,31 @@
 import UIKit
 
 enum ScreenshotMode {
+    private enum Sample: String {
+        case standard
+        case mirror
+
+        var assetName: String {
+            switch self {
+            case .standard: "SamplePhoto"
+            case .mirror: "MirrorSamplePhoto"
+            }
+        }
+
+        var hasBakedDateStamp: Bool { self == .standard }
+    }
+
     #if targetEnvironment(simulator)
-    static let samplePhoto: UIImage? = UIImage(named: "SamplePhoto")
+    private static let sample: Sample? =
+        Sample(rawValue: UserDefaults.standard.string(forKey: "ScreenshotSample") ?? "") ?? .standard
     #else
-    static let samplePhoto: UIImage? = nil
+    private static let sample: Sample? = nil
     #endif
 
+    static let samplePhoto: UIImage? = sample.flatMap { UIImage(named: $0.assetName) }
+
     static var isActive: Bool { samplePhoto != nil }
+
+    /// サンプル写真にスタンプが焼き込み済みで、ライブの DateStamp を出すと二重になるか
+    static var hidesLiveDateStamp: Bool { isActive && sample?.hasBakedDateStamp == true }
 }
