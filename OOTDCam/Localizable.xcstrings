@@ -97,23 +97,6 @@
         }
       }
     },
-    "シャッター" : {
-      "comment" : "VoiceOver: シャッターボタン",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shutter"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "シャッター"
-          }
-        }
-      }
-    },
     "ぼかし" : {
       "comment" : "ラベル幅34ptに収まる短い語にする",
       "localizations" : {
@@ -276,23 +259,6 @@
         }
       }
     },
-    "撮り直す" : {
-      "comment" : "VoiceOver: 編集画面の ← ボタン",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Retake"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "撮り直す"
-          }
-        }
-      }
-    },
     "濃さ" : {
       "comment" : "モチーフの透け感スライダー。ラベル幅34ptに収まる短い語にする",
       "localizations" : {
@@ -338,23 +304,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "続けて撮る"
-          }
-        }
-      }
-    },
-    "編集に戻る" : {
-      "comment" : "VoiceOver: 保存完了画面の ← ボタン",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Back to Edit"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "編集に戻る"
           }
         }
       }
