@@ -56,17 +56,6 @@ struct CameraView: View {
         } message: {
             Text("カメラを使用するには設定で許可が必要です")
         }
-        .alert("写真権限がありません", isPresented: $viewModel.photoLibraryPermissionDenied) {
-            Button("設定を開く") {
-                if let url = URL(string: UIApplication.openSettingsURLString),
-                   UIApplication.shared.canOpenURL(url) {
-                    UIApplication.shared.open(url)
-                }
-            }
-            Button("キャンセル", role: .cancel) {}
-        } message: {
-            Text("写真を保存するには設定で許可が必要です")
-        }
         .onAppear { viewModel.send(.onAppear) }
         .onDisappear { viewModel.send(.onDisappear) }
         .onChange(of: viewModel.lastCapturedPhoto) { _, photo in
