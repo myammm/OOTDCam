@@ -11,24 +11,6 @@ enum CoverShapeID: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
-        switch self {
-        case .heart: return "♡"
-        case .star: return "★"
-        case .butterfly: return "🦋"
-        case .cloud: return "☁️"
-        }
-    }
-
-    var name: String {
-        switch self {
-        case .heart: return "HEART"
-        case .star: return "STAR"
-        case .butterfly: return "BUTTERFLY"
-        case .cloud: return "CLOUD"
-        }
-    }
-
     /// JSX viewBox の名目サイズ。スケール基準
     var nominalSize: CGSize {
         switch self {
@@ -48,7 +30,6 @@ enum CoverGradientID: String, CaseIterable, Identifiable {
 
 struct CoverGradient: Identifiable, Equatable {
     let id: CoverGradientID
-    let label: String
     let colors: [Color]
 
     var uiColors: [UIColor] {
@@ -64,27 +45,27 @@ enum CoverPresets {
     /// 各色 [中間 (Light) → 適用値 (Base) → 外周 (Deep)] のパステル族。
     /// カラードットの泡色 (白 + Light + Deep) とシェイプの塗りが同じ定義を共有する
     static let gradients: [CoverGradient] = [
-        .init(id: .pink, label: "PINK", colors: [
+        .init(id: .pink, colors: [
             Color(.coverPinkLight),
             Color(.coverPinkBase),
             Color(.coverPinkDeep)
         ]),
-        .init(id: .lavender, label: "LAVENDER", colors: [
+        .init(id: .lavender, colors: [
             Color(.coverLavenderLight),
             Color(.coverLavenderBase),
             Color(.coverLavenderDeep)
         ]),
-        .init(id: .sunset, label: "SUNSET", colors: [
+        .init(id: .sunset, colors: [
             Color(.coverSunsetLight),
             Color(.coverSunsetBase),
             Color(.coverSunsetDeep)
         ]),
-        .init(id: .cyber, label: "CYBER", colors: [
+        .init(id: .cyber, colors: [
             Color(.coverCyberLight),
             Color(.coverCyberBase),
             Color(.coverCyberDeep)
         ]),
-        .init(id: .mint, label: "MINT", colors: [
+        .init(id: .mint, colors: [
             Color(.coverMintLight),
             Color(.coverMintBase),
             Color(.coverMintDeep)
