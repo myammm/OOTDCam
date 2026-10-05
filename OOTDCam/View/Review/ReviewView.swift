@@ -135,16 +135,14 @@ struct ReviewView: View {
 }
 
 // MARK: - Preview
-struct ReviewView_Previews: PreviewProvider {
-    static var previews: some View {
-        ReviewView(
-            viewModel: ReviewViewModel(photo: CapturedPhoto(
-                original: UIImage(systemName: "person.fill") ?? UIImage(),
-                display: UIImage(systemName: "person.fill") ?? UIImage()
-            )),
-            basePhotoWidth: 0,
-            onRetake: {},
-            onDone: { _ in }
-        )
-    }
+#Preview {
+    ReviewView(
+        viewModel: ReviewViewModel(photo: CapturedPhoto(
+            original: UIImage(systemName: "person.fill") ?? UIImage(),
+            display: UIImage(systemName: "person.fill") ?? UIImage()
+        )),
+        basePhotoWidth: 0,
+        onRetake: {},
+        onDone: { _ in }
+    )
 }

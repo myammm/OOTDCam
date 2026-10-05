@@ -135,16 +135,14 @@ struct SavedView: View {
 
 // MARK: - Preview
 
-struct SavedView_Previews: PreviewProvider {
-    static var previews: some View {
-        SavedView(
-            photo: SavedPhoto(
-                display: UIImage(systemName: "person.fill") ?? UIImage(),
-                fileURL: nil
-            ),
-            basePhotoWidth: 0,
-            onBack: {},
-            onShoot: {}
-        )
-    }
+#Preview {
+    SavedView(
+        photo: SavedPhoto(
+            display: UIImage(systemName: "person.fill") ?? UIImage(),
+            fileURL: nil
+        ),
+        basePhotoWidth: 0,
+        onBack: {},
+        onShoot: {}
+    )
 }

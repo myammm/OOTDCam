@@ -201,8 +201,6 @@ struct ShutterButton: View {
 }
 
 // MARK: - Preview
-struct CameraView_Previews: PreviewProvider {
-    static var previews: some View {
-        CameraView(onPhotoTaken: { _ in }, onPreviewWidthChanged: { _ in })
-    }
+#Preview {
+    CameraView(onPhotoTaken: { _ in }, onPreviewWidthChanged: { _ in })
 }

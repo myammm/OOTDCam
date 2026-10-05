@@ -100,23 +100,15 @@ struct GlassSlider: View {
     }
 }
 
-struct GlassSlider_Previews: PreviewProvider {
-    struct Wrapper: View {
-        @State private var value = 0.55
-        var body: some View {
-            HStack(spacing: 10) {
-                Text("濃さ")
-                    .font(.system(size: 11.5, weight: .medium, design: .rounded))
-                    .foregroundStyle(Pearl.inkSoft)
-                    .frame(width: 34, alignment: .leading)
-                GlassSlider(value: $value, range: 0.15...0.85, step: 0.05)
-            }
-            .padding()
-            .background(PearlBackground())
-        }
+#Preview {
+    @Previewable @State var value = 0.55
+    HStack(spacing: 10) {
+        Text("濃さ")
+            .font(.system(size: 11.5, weight: .medium, design: .rounded))
+            .foregroundStyle(Pearl.inkSoft)
+            .frame(width: 34, alignment: .leading)
+        GlassSlider(value: $value, range: 0.15...0.85, step: 0.05)
     }
-
-    static var previews: some View {
-        Wrapper()
-    }
+    .padding()
+    .background(PearlBackground())
 }
