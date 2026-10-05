@@ -110,8 +110,8 @@ struct CameraView: View {
             GuideOverlayView()
 
             // 位置は編集画面・保存時の焼き込みと揃える (右12pt / 下10pt)
-            // スクショモードのサンプル写真はスタンプ焼き込み済みなのでライブ表示しない
-            if !ScreenshotMode.isActive {
+            // スクショモードのサンプル写真がスタンプ焼き込み済みならライブ表示しない
+            if !ScreenshotMode.hidesLiveDateStamp {
                 DateStamp()
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                     .padding(.bottom, 10)
