@@ -31,6 +31,7 @@ final class ReviewViewModel: ObservableObject {
 
     @Published var isSaving: Bool = false
     @Published var saveErrorMessage: String?
+    @Published var photoLibraryPermissionDenied = false
 
     /// 撮影時刻 (プレビューと保存で同じ日付を出すために固定)
     let capturedDate: Date = Date()
@@ -163,6 +164,12 @@ final class ReviewViewModel: ObservableObject {
     func compositeAndSave(areaSize: CGSize) async -> SavedPhoto? {
         if let last = lastSaved, last.fingerprint == currentFingerprint {
             return last.photo
+        }
+
+        // 写真ライブラリの権限は撮影には不要なので、実際に保存するときに初めて要求する
+        guard await photoLibrary.requestAddPermission() else {
+            photoLibraryPermissionDenied = true
+            return nil
         }
 
         isSaving = true

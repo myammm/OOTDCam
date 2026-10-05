@@ -85,6 +85,17 @@ struct ReviewView: View {
         } message: {
             Text(viewModel.saveErrorMessage ?? "")
         }
+        .alert("写真権限がありません", isPresented: $viewModel.photoLibraryPermissionDenied) {
+            Button("設定を開く") {
+                if let url = URL(string: UIApplication.openSettingsURLString),
+                   UIApplication.shared.canOpenURL(url) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("写真を保存するには設定で許可が必要です")
+        }
     }
 
     private func handleDone() {
@@ -124,16 +135,14 @@ struct ReviewView: View {
 }
 
 // MARK: - Preview
-struct ReviewView_Previews: PreviewProvider {
-    static var previews: some View {
-        ReviewView(
-            viewModel: ReviewViewModel(photo: CapturedPhoto(
-                original: UIImage(systemName: "person.fill") ?? UIImage(),
-                display: UIImage(systemName: "person.fill") ?? UIImage()
-            )),
-            basePhotoWidth: 0,
-            onRetake: {},
-            onDone: { _ in }
-        )
-    }
+#Preview {
+    ReviewView(
+        viewModel: ReviewViewModel(photo: CapturedPhoto(
+            original: UIImage(systemName: "person.fill") ?? UIImage(),
+            display: UIImage(systemName: "person.fill") ?? UIImage()
+        )),
+        basePhotoWidth: 0,
+        onRetake: {},
+        onDone: { _ in }
+    )
 }

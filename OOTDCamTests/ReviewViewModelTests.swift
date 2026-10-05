@@ -19,6 +19,7 @@ actor MockPhotoLibrary: PhotoLibrarySaving {
     /// save(_:) (iOS 側で再エンコードする経路) の呼び出し回数
     private(set) var savedImageCount = 0
     private var shouldFail = false
+    private var permissionGranted = true
 
     var saveCount: Int { savedFileURLs.count + savedImageCount }
 
@@ -26,7 +27,11 @@ actor MockPhotoLibrary: PhotoLibrarySaving {
         shouldFail = value
     }
 
-    func requestAddPermission() async -> Bool { true }
+    func setPermissionGranted(_ value: Bool) {
+        permissionGranted = value
+    }
+
+    func requestAddPermission() async -> Bool { permissionGranted }
 
     func save(_ image: UIImage) async throws {
         if shouldFail { throw SaveError() }
@@ -123,6 +128,19 @@ struct ReviewViewModelTests {
 
         #expect(retried != nil)
         #expect(await library.saveCount == 1)
+    }
+
+    @Test func 写真の権限が拒否されたら保存せずnilを返す() async throws {
+        let library = MockPhotoLibrary()
+        await library.setPermissionGranted(false)
+        let viewModel = makeViewModel(photoLibrary: library)
+
+        let saved = await viewModel.compositeAndSave(areaSize: areaSize)
+
+        #expect(saved == nil)
+        #expect(viewModel.photoLibraryPermissionDenied)
+        #expect(viewModel.saveErrorMessage == nil)
+        #expect(await library.saveCount == 0)
     }
 
     @Test func カバーありでも合成して保存できる() async throws {

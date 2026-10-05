@@ -14,21 +14,12 @@ final class CameraViewModel: ObservableObject {
     @Published var showSparkles: Bool = false
     @Published var showFlash: Bool = false
     @Published var lastCapturedPhoto: CapturedPhoto?
-    
-    let service = CameraService()
-    private let photoLibrary: PhotoLibrarySaving
-
-    init(photoLibrary: PhotoLibrarySaving = PhotoLibraryService()) {
-        self.photoLibrary = photoLibrary
-    }
-
-
-    // 権限状態
-    private var cameraAuthorized = false
-    private var photoLibraryAuthorized = false
     @Published var cameraPermissionDenied = false
-    @Published var photoLibraryPermissionDenied = false
-    
+
+    let service = CameraService()
+    /// 写真ライブラリの権限は撮影には不要なので、ここでは扱わず保存時 (ReviewViewModel) に要求する
+    private var cameraAuthorized = false
+
     enum Input {
         case onAppear
         case onDisappear
@@ -38,34 +29,26 @@ final class CameraViewModel: ObservableObject {
     func send(_ input: Input) {
         switch input {
         case .onAppear:
-            requestPermissionsAndStart()
+            requestPermissionAndStart()
         case .onDisappear:
             stop()
         case .takePhoto(let visibleRect):
             takePhoto(visibleRect: visibleRect)
         }
     }
-    
+
     // MARK: - 権限チェック & セッション開始
-    private func requestPermissionsAndStart() {
+    private func requestPermissionAndStart() {
         // スクショモードはカメラを使わないので権限確認ごと省略 (ダイアログがスクショに写るのを防ぐ)
         guard !ScreenshotMode.isActive else { return }
         Task {
-            // カメラ権限
             cameraAuthorized = await checkCameraPermission()
             guard cameraAuthorized else {
                 cameraPermissionDenied = true
                 return
             }
-            
-            // 写真ライブラリ権限
-            photoLibraryAuthorized = await photoLibrary.requestAddPermission()
-            guard photoLibraryAuthorized else {
-                photoLibraryPermissionDenied = true
-                return
-            }
-            
-            // 両方OKならセッション開始 (固定されたままのプレビューが残っていたら解除)
+
+            // 固定されたままのプレビューが残っていたら解除
             service.unfreezePreview()
             service.startSession()
         }
@@ -85,14 +68,14 @@ final class CameraViewModel: ObservableObject {
             return false
         }
     }
-    
+
     private func stop() {
         service.stopSession()
     }
-    
+
     private func takePhoto(visibleRect: CGRect) {
         // スクショモードは権限に依存しない (シミュレータで権限ダイアログを出さない)
-        guard (cameraAuthorized && photoLibraryAuthorized) || ScreenshotMode.isActive else { return }
+        guard cameraAuthorized || ScreenshotMode.isActive else { return }
 
         // シャッター直後にプレビューを固定して「撮れた」を即座に見せる
         service.freezePreview()

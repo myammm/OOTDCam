@@ -110,12 +110,10 @@ struct FootDashShape: Shape {
     }
 }
 
-struct GuideOverlayView_Previews: PreviewProvider {
-    static var previews: some View {
-        ZStack {
-            Color(.photoBackdrop)
-            GuideOverlayView()
-        }
-        .aspectRatio(3.0 / 4.0, contentMode: .fit)
+#Preview {
+    ZStack {
+        Color(.photoBackdrop)
+        GuideOverlayView()
     }
+    .aspectRatio(3.0 / 4.0, contentMode: .fit)
 }
