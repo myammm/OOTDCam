@@ -15,7 +15,7 @@ final class ReviewViewModel: ObservableObject {
     let displayImage: UIImage
 
     @Published var selectedShape: CoverShapeID = .heart
-    @Published var selectedGradientID: String = "pink"
+    @Published var selectedGradientID: CoverGradientID = .pink
     @Published var sheer: Double = 0.55
     @Published var blur: Double = 12
 
@@ -47,7 +47,7 @@ final class ReviewViewModel: ObservableObject {
     private struct EditFingerprint: Equatable {
         var hasOverlay: Bool
         var shape: CoverShapeID
-        var gradientID: String
+        var gradientID: CoverGradientID
         var sheer: Double
         var blur: Double
         var center: CGPoint
@@ -128,7 +128,7 @@ final class ReviewViewModel: ObservableObject {
         hasOverlay = false
     }
 
-    func selectGradient(id: String) {
+    func selectGradient(id: CoverGradientID) {
         selectedGradientID = id
         // gradient のタップでは overlay を勝手に出さない (OFF 状態を尊重)
     }

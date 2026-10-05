@@ -40,8 +40,14 @@ enum CoverShapeID: String, CaseIterable, Identifiable {
     }
 }
 
+enum CoverGradientID: String, CaseIterable, Identifiable {
+    case pink, lavender, sunset, cyber, mint
+
+    var id: String { rawValue }
+}
+
 struct CoverGradient: Identifiable, Equatable {
-    let id: String
+    let id: CoverGradientID
     let label: String
     let colors: [Color]
 
@@ -58,34 +64,34 @@ enum CoverPresets {
     /// 各色 [中間 (Light) → 適用値 (Base) → 外周 (Deep)] のパステル族。
     /// カラードットの泡色 (白 + Light + Deep) とシェイプの塗りが同じ定義を共有する
     static let gradients: [CoverGradient] = [
-        .init(id: "pink", label: "PINK", colors: [
+        .init(id: .pink, label: "PINK", colors: [
             Color(.coverPinkLight),
             Color(.coverPinkBase),
             Color(.coverPinkDeep)
         ]),
-        .init(id: "lavender", label: "LAVENDER", colors: [
+        .init(id: .lavender, label: "LAVENDER", colors: [
             Color(.coverLavenderLight),
             Color(.coverLavenderBase),
             Color(.coverLavenderDeep)
         ]),
-        .init(id: "sunset", label: "SUNSET", colors: [
+        .init(id: .sunset, label: "SUNSET", colors: [
             Color(.coverSunsetLight),
             Color(.coverSunsetBase),
             Color(.coverSunsetDeep)
         ]),
-        .init(id: "cyber", label: "CYBER", colors: [
+        .init(id: .cyber, label: "CYBER", colors: [
             Color(.coverCyberLight),
             Color(.coverCyberBase),
             Color(.coverCyberDeep)
         ]),
-        .init(id: "mint", label: "MINT", colors: [
+        .init(id: .mint, label: "MINT", colors: [
             Color(.coverMintLight),
             Color(.coverMintBase),
             Color(.coverMintDeep)
         ]),
     ]
 
-    static func gradient(id: String) -> CoverGradient {
+    static func gradient(id: CoverGradientID) -> CoverGradient {
         gradients.first { $0.id == id } ?? gradients[0]
     }
 }
