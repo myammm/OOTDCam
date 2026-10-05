@@ -46,7 +46,6 @@ struct SparkleOverlay: View {
             }
         }
         .allowsHitTesting(false)
-        .accessibilityHidden(true)
     }
 }
 

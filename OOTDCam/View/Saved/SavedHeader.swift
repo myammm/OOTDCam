@@ -20,7 +20,6 @@ struct SavedHeader: View {
                     Text("←")
                 }
                 .buttonStyle(PearlCircleButtonStyle(size: Pearl.barButtonHeight))
-                .accessibilityLabel("編集に戻る")
                 Spacer()
             }
         }

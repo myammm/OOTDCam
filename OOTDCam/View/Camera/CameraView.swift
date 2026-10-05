@@ -195,7 +195,6 @@ struct ShutterButton: View {
         .scaleEffect(isAnimating ? 0.88 : 1.0)
         .contentShape(Circle())
         .onTapGesture { onTap() }
-        .accessibilityLabel("シャッター")
         .accessibilityAddTraits(.isButton)
     }
 }
