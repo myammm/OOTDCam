@@ -129,7 +129,7 @@ struct ReviewViewModelTests {
         let library = MockPhotoLibrary()
         let viewModel = makeViewModel(photoLibrary: library)
         viewModel.initializePositionIfNeeded(areaSize: areaSize)
-        viewModel.selectShape(.heart, areaSize: areaSize)
+        viewModel.selectShape(.heart)
 
         let saved = try #require(await viewModel.compositeAndSave(areaSize: areaSize))
         defer { removeTemporaryFile(of: saved) }
@@ -160,7 +160,7 @@ struct ReviewViewModelTests {
         let library = MockPhotoLibrary()
         let viewModel = ReviewViewModel(photo: CapturedPhoto(original: image, display: image), photoLibrary: library)
         let area = CGSize(width: 300, height: 500)
-        viewModel.selectShape(.star, areaSize: area)
+        viewModel.selectShape(.star)
         viewModel.sheer = 1
         viewModel.blur = 0
         viewModel.includeDateStamp = false

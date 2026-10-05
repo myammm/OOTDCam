@@ -100,7 +100,7 @@ final class ReviewViewModel: ObservableObject {
     }
 
     /// 表示用シェイプサイズ (nominal × scale)
-    func displayedShapeSize(in areaSize: CGSize) -> CGSize {
+    var displayedShapeSize: CGSize {
         let nominal = selectedShape.nominalSize
         return CGSize(width: nominal.width * overlayScale, height: nominal.height * overlayScale)
     }
@@ -114,7 +114,7 @@ final class ReviewViewModel: ObservableObject {
 
     // MARK: - User actions
 
-    func selectShape(_ shape: CoverShapeID, areaSize: CGSize) {
+    func selectShape(_ shape: CoverShapeID) {
         selectedShape = shape
         if !hasOverlay {
             // OFF → ON のときは位置とサイズを維持して復帰させる
@@ -123,12 +123,12 @@ final class ReviewViewModel: ObservableObject {
         }
     }
 
-    /// OFF ボタン用: オーバーレイを非表示にする
+    /// OFF タイル・✕ボタン用: オーバーレイを非表示にする
     func disableOverlay() {
         hasOverlay = false
     }
 
-    func selectGradient(id: String, areaSize: CGSize) {
+    func selectGradient(id: String) {
         selectedGradientID = id
         // gradient のタップでは overlay を勝手に出さない (OFF 状態を尊重)
     }
@@ -153,10 +153,6 @@ final class ReviewViewModel: ObservableObject {
     func stepScale(_ direction: Int) {
         let index = min(max(scaleIndex + direction, 0), Self.scaleLevels.count - 1)
         overlayScale = Self.scaleLevels[index]
-    }
-
-    func removeOverlay() {
-        hasOverlay = false
     }
 
     // MARK: - Save
@@ -235,7 +231,7 @@ final class ReviewViewModel: ObservableObject {
         let displayed = displayedPhotoRect(in: areaSize)
         guard displayed.width > 0, displayed.height > 0 else { return nil }
 
-        let displayedShape = displayedShapeSize(in: areaSize)
+        let displayedShape = displayedShapeSize
 
         // 写真エリア座標 → 表示写真座標
         let centerInPhoto = CGPoint(

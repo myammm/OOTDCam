@@ -44,7 +44,7 @@ struct ReviewPhotoArea: View {
                     }
                     circleControl(label: "✕") {
                         withAnimation(ReviewView.overlayToggleAnimation) {
-                            viewModel.removeOverlay()
+                            viewModel.disableOverlay()
                         }
                     }
                 }
@@ -91,7 +91,7 @@ struct ReviewPhotoArea: View {
     }
 
     private func overlayLayer(areaSize: CGSize) -> some View {
-        let shapeSize = viewModel.displayedShapeSize(in: areaSize)
+        let shapeSize = viewModel.displayedShapeSize
         let shape = CoverShape(id: viewModel.selectedShape)
 
         return ZStack {
