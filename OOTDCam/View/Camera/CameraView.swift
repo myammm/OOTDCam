@@ -196,6 +196,7 @@ struct ShutterButton: View {
         .contentShape(Circle())
         .onTapGesture { onTap() }
         .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("shutterButton")
     }
 }
 

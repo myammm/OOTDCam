@@ -19,7 +19,7 @@
 - iOS 18.0+
 - Swift 6 / SwiftUI
 - AVFoundation, Core Image, Photos
-- Swift Testing
+- Swift Testing / XCUITest
 - Google Mobile Ads, RevenueCat (SPM)
 - 日本語 / 英語
 

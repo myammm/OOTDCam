@@ -54,6 +54,7 @@ struct SavedActions: View {
                     }
             }
             .buttonStyle(PressScaleButtonStyle())
+            .accessibilityIdentifier("shootAgainButton")
         }
     }
 }

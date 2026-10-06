@@ -148,6 +148,7 @@ struct ReviewControlPad: View {
                 } icon: { selected in
                     ShapeTileIcon(shapeID: shapeID, selected: selected)
                 }
+                .accessibilityIdentifier("shapeTile.\(shapeID.rawValue)")
             }
         }
     }
